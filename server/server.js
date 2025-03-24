@@ -2,12 +2,14 @@ const express = require('express')
 const dotenv = require('dotenv')
 const userRoute = require('./routers/userRouter')
 const connectDB = require('./config/db')
+const uploadRoute = require('./routers/upload')
 
 const app = express()
 dotenv.config()
 app.use(express.json())
 
 app.use("/api", userRoute)
+app.use("/v1", uploadRoute)
 
 app.get("/", (req, res) => {
     try {
