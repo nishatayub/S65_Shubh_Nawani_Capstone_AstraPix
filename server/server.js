@@ -1,9 +1,10 @@
 const express = require('express')
 const dotenv = require('dotenv')
-const userRoute = require('./routers/userRouter')
+const userRoute = require('./routers/userRoute')
 const connectDB = require('./config/db')
 const cookieParser = require('cookie-parser')
 const uploadRoute = require('./routers/upload')
+const creditRoute = require('./routers/creditRoute')
 
 const app = express()
 dotenv.config()
@@ -12,6 +13,7 @@ app.use(cookieParser())
 
 app.use("/api", userRoute)
 app.use("/v1", uploadRoute)
+app.use("/check", creditRoute)
 
 app.get("/", (req, res) => {
     try {
