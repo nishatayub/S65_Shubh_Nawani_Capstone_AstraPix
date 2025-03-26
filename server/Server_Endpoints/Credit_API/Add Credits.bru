@@ -1,0 +1,15 @@
+meta {
+  name: Add Credits
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8000/check/credits/:email
+  body: none
+  auth: inherit
+}
+
+params:path {
+  email: 
+}
