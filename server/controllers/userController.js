@@ -15,6 +15,8 @@ const getUsers = async (req, res) => {
     }
 }
 
+
+
 const signup = async (req, res) => {
     try {
         const {email, password} = req.body
@@ -44,7 +46,21 @@ const signup = async (req, res) => {
 
         await newUser.save()
 
-        return res.status(201).json({message: "Signup Successfull..."})
+        // Generate token for new user
+        const token = jwt.sign({id: newUser.id}, process.env.JWT_SECRET, {expiresIn: "1h"})
+
+        // Set cookie
+        res.cookie("token", token, {httpOnly: true})
+
+        // Send response with token and user data
+        return res.status(201).json({
+            message: "Signup Successful...",
+            token: token,
+            user: {
+                email: newUser.email,
+                id: newUser._id
+            }
+        })
         
     } catch (err) {
         return res.status(500).json({error: err.message})
@@ -79,13 +95,24 @@ const login = async (req, res) => {
 
         const token = jwt.sign({id: existingUser.id}, process.env.JWT_SECRET, {expiresIn: "1h"})
 
+        // Set the cookie
         res.cookie("token", token, {httpOnly: true})
 
-        return res.status(200).json({message: "Login Successfull..."})
+        // Send token and user data in response body
+        return res.status(200).json({
+            message: "Login Successful...",
+            token: token,
+            user: {
+                email: existingUser.email,
+                id: existingUser._id
+            }
+        })
     
     } catch (err) {
         return res.status(500).json({error: err.message})
     }
 }
+
+
 
 module.exports = {getUsers, login, signup}
