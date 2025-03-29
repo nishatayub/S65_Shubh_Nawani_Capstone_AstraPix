@@ -140,7 +140,7 @@ Buffer days to address unexpected bugs, delays, or additional features that may 
 
 ---
 
-### Design Link:  https://www.figma.com/design/8VP0YVUTy7i6YuY2M5SNFj/AstraPix_High_Fid?node-id=0-1&t=JNINPR2wdXlcTqQn-1
+### Design Link: https://www.figma.com/design/8VP0YVUTy7i6YuY2M5SNFj/AstraPix_High_Fid?node-id=0-1&t=JNINPR2wdXlcTqQn-1
 
 ## Contact
 For any queries or collaborations, reach out via GitHub Issues or email at **shubhnawani@outlook.com**.
