@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
+import { ThemeContext } from '../context/ThemeContext';
 import PaymentModal from './PaymentModal';
 import { useNavigate } from 'react-router-dom';
 import BackgroundImage from '../assets/bg.jpg';
-import Logo from '../assets/logo.jpg';
 import { Sun, Moon, Loader2, CreditCard, Image, History } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import axios from 'axios';
+import Logo from './Logo';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const { darkMode, toggleTheme } = useTheme();
+  const { darkMode, toggleTheme } = useContext(ThemeContext);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const navigate = useNavigate();
   const [credits, setCredits] = useState(0);
@@ -108,6 +108,7 @@ const Dashboard = () => {
   const username = user?.email ? user.email.split('@')[0] : 'User';
 
   return (
+    
     <div className={`min-h-screen relative ${darkMode ? 'dark' : ''}`}>
       <Toaster position="top-right" />
       
@@ -128,8 +129,12 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className={`p-1 rounded-full ${darkMode ? 'bg-white' : 'bg-transparent'}`}>
-                <img src={Logo} alt="AstraPix Logo" className="h-8 w-auto" />
+              <div>
+              <Logo 
+                  className="w-12 h-12 object-contain transition-all duration-200" 
+                  width="48px"
+                  height="48px"
+                />
               </div>
               <h1 className="text-2xl font-bold text-gray-800 dark:text-white">AstraPix</h1>
             </div>

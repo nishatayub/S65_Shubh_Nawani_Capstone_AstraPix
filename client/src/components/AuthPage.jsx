@@ -1,31 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Sun, Moon } from 'lucide-react';
+import { Eye, EyeOff, Sun, Moon, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { ThemeContext } from '../context/ThemeContext';
 import BackgroundImage from '../assets/bg.jpg';
-import Logo from '../assets/logo.jpg';
+import Logo from './Logo';
 import GoogleIcon from '../assets/google.png';
 import axios from 'axios';
 
 const AuthPage = () => {
   const { login } = useAuth();
-  const { darkMode, toggleTheme } = useTheme();
+  const { darkMode, toggleTheme } = useContext(ThemeContext);
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleToggle = () => {
     setIsLogin(!isLogin);
     setError(null);
+    setFormData({ email: '', password: '' });
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setError(null);
   };
 
   const handleGoogleLogin = () => {
@@ -34,7 +37,11 @@ const AuthPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     setError(null);
+
     try {
       const url = `http://localhost:8000/api/${isLogin ? 'login' : 'signup'}`;
       const response = await axios.post(url, formData);
@@ -42,6 +49,8 @@ const AuthPage = () => {
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -76,9 +85,7 @@ const AuthPage = () => {
       >
         <div className="p-8">
           <div className="flex justify-center mb-6">
-            <div className={`p-2 rounded-full ${darkMode ? 'bg-white' : 'bg-transparent'}`}>
-              <img src={Logo} alt="AstraPix Logo" className="h-16 w-auto" />
-            </div>
+            <Logo className="h-16 w-16" />
           </div>
 
           <motion.div 
@@ -95,15 +102,20 @@ const AuthPage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 transition-colors"
+              disabled={isSubmitting}
             >
               {isLogin ? 'Create account' : 'Back to login'}
             </motion.button>
           </motion.div>
 
           {error && (
-            <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg">
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-4 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg"
+            >
               {error}
-            </div>
+            </motion.div>
           )}
 
           <AnimatePresence mode="wait">
@@ -124,6 +136,7 @@ const AuthPage = () => {
                   value={formData.email}
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-lg bg-white/70 dark:bg-gray-700/70 border-transparent focus:border-purple-500 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-purple-300 dark:focus:ring-purple-800 transition duration-300"
+                  disabled={isSubmitting}
                   required
                 />
               </div>
@@ -137,12 +150,14 @@ const AuthPage = () => {
                     value={formData.password}
                     onChange={handleChange}
                     className="w-full px-4 py-3 rounded-lg bg-white/70 dark:bg-gray-700/70 border-transparent focus:border-purple-500 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-purple-300 dark:focus:ring-purple-800 transition duration-300 pr-12"
+                    disabled={isSubmitting}
                     required
                   />
                   <button 
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-300 transition"
+                    disabled={isSubmitting}
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -150,14 +165,26 @@ const AuthPage = () => {
               </div>
 
               <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition duration-300 ease-in-out transform"
+                type="submit"
+                disabled={isSubmitting}
+                whileHover={{ scale: isSubmitting ? 1 : 1.05 }}
+                whileTap={{ scale: isSubmitting ? 1 : 0.95 }}
+                className={`w-full flex items-center justify-center py-3 rounded-lg transition duration-300 ease-in-out transform ${
+                  isSubmitting 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700'
+                } text-white`}
               >
-                {isLogin ? 'Login' : 'Create Account'}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" size={20} />
+                    {isLogin ? 'Logging in...' : 'Creating Account...'}
+                  </>
+                ) : (
+                  isLogin ? 'Login' : 'Create Account'
+                )}
               </motion.button>
 
-              {/* Google OAuth Button */}
               <div className="mt-6">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
@@ -173,9 +200,14 @@ const AuthPage = () => {
                 <motion.button
                   type="button"
                   onClick={handleGoogleLogin}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="mt-6 w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-300"
+                  disabled={isSubmitting}
+                  whileHover={{ scale: isSubmitting ? 1 : 1.05 }}
+                  whileTap={{ scale: isSubmitting ? 1 : 0.95 }}
+                  className={`mt-6 w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 ${
+                    isSubmitting 
+                      ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed' 
+                      : 'bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'
+                  } transition-colors duration-300`}
                 >
                   <img 
                     src={GoogleIcon} 
