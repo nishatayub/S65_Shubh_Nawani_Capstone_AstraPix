@@ -1,8 +1,8 @@
 import { useContext } from 'react';
-import { ThemeContext } from '../context/ThemeContext';
-import { getLogoSrc } from '../utils/themeUtils';
+import { ThemeContext } from '../../context/ThemeContext';
+import { getLogoSrc } from '../../utils/themeUtils';
 
-const Logo = ({ className = "", width = "64px", height = "64px", alt = "AstraPix Logo" }) => {
+const Logo = ({ className = "", width = "3rem", height = "3rem", alt = "AstraPix Logo" }) => {
   const { darkMode } = useContext(ThemeContext);
   
   return (
