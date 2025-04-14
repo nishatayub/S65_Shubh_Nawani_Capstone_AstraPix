@@ -3,7 +3,7 @@ import { Sun, Moon, CreditCard, ChevronDown, LogOut, UserCog, Home, Image, Palet
 import Swal from 'sweetalert2';
 import Logo from './Logo';
 import { getInitialAvatar } from '../../utils/avatarUtils';
-import qrCode from '../../assets/AstraPix_QR.jpg'; // Add this import
+import qrCode from '../../assets/AstraPix_QR.svg'; // Add this import
 import toast from 'react-hot-toast'; // Add this import
 import axios from 'axios';  // Add this import at the top
 import { Link } from 'react-router-dom';

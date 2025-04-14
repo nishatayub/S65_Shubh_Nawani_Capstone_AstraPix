@@ -37,6 +37,7 @@ const Dashboard = () => {
   const [userImages, setUserImages] = useState([]);
   const [loadingImages, setLoadingImages] = useState(true);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [galleryKey, setGalleryKey] = useState(0);
 
   // Memoized API headers
   const authHeaders = useMemo(() => ({
@@ -74,6 +75,20 @@ const Dashboard = () => {
       setLoadingImages(false);
     }
   }, [user?.email, authHeaders]);
+
+  // Add this new function after fetchUserData
+  const fetchGalleryImages = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URI}/generate/gallery`, 
+        authHeaders
+      );
+      setUserImages(response.data.images);
+      setLoadingImages(false);
+    } catch (err) {
+      console.error('Failed to fetch gallery images');
+    }
+  }, [authHeaders]);
 
   useEffect(() => {
     fetchUserData();
@@ -149,34 +164,28 @@ const Dashboard = () => {
     setGeneratedImage(null);
 
     try {
-        const response = await axios.post(`${import.meta.env.VITE_BASE_URI}/generate/generate`, 
+        const response = await axios.post(
+            `${import.meta.env.VITE_BASE_URI}/generate/generate`, 
             { prompt: prompt.trim(), userId: user._id },
             authHeaders
         );
 
         if (response.data.success) {
-            const newImage = {
-                _id: response.data.imageId,
-                imageUrl: response.data.cloudinaryUrl,
-                prompt: prompt,
-                generatedAt: response.data.generatedAt,
-                createdAt: response.data.createdAt
-            };
-
             setGeneratedImage(response.data.cloudinaryUrl);
-            setUserImages(prev => [newImage, ...prev]);
             setCredits(prev => prev - 1);
+            setPrompt('');
+            await fetchGalleryImages();
+            // Force gallery re-render by updating key
+            setGalleryKey(prev => prev + 1);
             toast.success('Image generated successfully!');
         }
     } catch (err) {
         toast.error('Failed to generate image');
         setGenerationError('Failed to generate image. Please try again.');
-        // Revert credits if needed
-        fetchUserData();
     } finally {
         setGenerating(false);
     }
-}, [prompt, credits, generating, user?._id, authHeaders, fetchUserData]);
+}, [prompt, credits, generating, user?._id, authHeaders, fetchGalleryImages]);
 
   // Memoized components
   const memoizedNav = useMemo(() => (
@@ -253,18 +262,15 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col relative bg-gradient-to-br from-gray-900 to-purple-900">
       <Toaster position="top-right" />
       
-      {/* Changed from sticky to fixed positioning */}
       <div className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-gray-900/80 border-b border-white/10 shadow-lg">
         {memoizedNav}
       </div>
 
-      {/* Add padding-top to main content to prevent overlap with fixed navbar */}
-      <main className="flex-grow relative z-10 pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-grow relative z-10 pt-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-[1400px] overflow-x-hidden">
           <div className="space-y-8">
-            {/* Simplified card backgrounds */}
-            <div className="bg-black/10 border border-white/10 p-6 sm:p-8 rounded-xl">
-              <h2 className="text-3xl font-bold mb-6 text-white">
+            <div className="bg-black/10 border border-white/10 p-4 sm:p-6 lg:p-8 rounded-xl">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-white">
                 Image Generation
               </h2>
               
@@ -276,19 +282,17 @@ const Dashboard = () => {
 
               {memoizedImageForm}
 
-              {/* Lazy load StatsGrid */}
               <Suspense fallback={<div className="h-24 animate-pulse bg-white/5 rounded-lg" />}>
                 <StatsGrid 
                   loading={loading}
                   credits={credits}
-                  generatedImages={userImages} // Pass full userImages array instead of just recent ones
+                  generatedImages={userImages}
                   openPaymentModal={() => setIsPaymentModalOpen(true)}
                 />
               </Suspense>
             </div>
 
             <div className="bg-black/10 border border-white/10 p-6 sm:p-8 rounded-xl">
-              {/* Gallery section with recent images */}
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold text-white">Recent Creations</h2>
                 <button
@@ -300,6 +304,7 @@ const Dashboard = () => {
               </div>
               <Suspense fallback={<div className="h-96 animate-pulse bg-white/5 rounded-lg" />}>
                 <Gallery 
+                  key={galleryKey}
                   images={recentImagesMemo.slice(0, 3)}
                   loading={loadingImages}
                   onDelete={handleDeleteImage}
@@ -314,7 +319,6 @@ const Dashboard = () => {
 
       <Footer />
 
-      {/* Lazy load PaymentModal only when needed */}
       {isPaymentModalOpen && (
         <Suspense fallback={<div className="fixed inset-0 bg-black/50" />}>
           <PaymentModal

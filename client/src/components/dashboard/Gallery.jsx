@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ThemeContext } from '../../context/ThemeContext';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PlusCircle, Loader, Download, Share2, Trash2, ArrowUpDown, X, Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
+import { PlusCircle, Loader, Download, Share2, Trash2, ArrowUpDown, X, Maximize2 } from 'lucide-react';
 import Navbar from '../common/Navbar';
 import Footer from '../common/Footer';
 import ImageViewer from '../common/ImageViewer';
@@ -42,7 +42,6 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
-  const [isZoomed, setIsZoomed] = useState(false);
 
   const fetchUserData = async () => {
     try {
@@ -243,59 +242,67 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/70 z-30 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 overflow-y-auto"
       onClick={() => setFullscreenImage(null)}
     >
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="relative max-w-2xl w-full mx-auto"
+        className="relative w-full max-w-5xl mx-auto my-8"
         onClick={e => e.stopPropagation()}
       >
-        {/* Close button - Moved outside image container */}
         <motion.button
           whileHover={{ scale: 1.1 }}
           onClick={() => setFullscreenImage(null)}
-          className="absolute -top-10 right-0 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white"
+          className="absolute -top-12 right-0 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white z-50"
         >
           <X className="w-5 h-5" />
         </motion.button>
 
         <div className="bg-gray-900/90 rounded-lg overflow-hidden backdrop-blur-sm">
-          <img
-            src={image.imageUrl}
-            alt={image.prompt}
-            className="w-full h-auto rounded-t-lg"
-          />
-          
-          <div className="p-4 border-t border-white/10">
-            <p className="text-white/90 text-sm mb-3">{image.prompt}</p>
-            <div className="flex items-center justify-center gap-4">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                onClick={() => handleDownload(image)}
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-full"
-              >
-                <Download className="w-4 h-4 text-white" />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                onClick={() => handleShare(image)}
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-full"
-              >
-                <Share2 className="w-4 h-4 text-white" />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                onClick={() => {
-                  handleDelete(image._id);
-                  setFullscreenImage(null);
-                }}
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-full"
-              >
-                <Trash2 className="w-4 h-4 text-red-400" />
-              </motion.button>
+          <div className="max-h-[80vh] overflow-y-auto">
+            <img
+              src={image.imageUrl}
+              alt={image.prompt}
+              className="w-full h-auto max-h-[70vh] object-contain"
+            />
+            
+            <div className="sticky bottom-0 w-full p-4 border-t border-white/10 bg-gray-900/95 backdrop-blur-md">
+              <p className="text-white/90 text-sm mb-3">{image.prompt}</p>
+              <div className="flex items-center justify-center gap-4">
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(image);
+                  }}
+                  className="p-2 bg-white/10 hover:bg-white/20 rounded-full"
+                >
+                  <Download className="w-4 h-4 text-white" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShare(image);
+                  }}
+                  className="p-2 bg-white/10 hover:bg-white/20 rounded-full"
+                >
+                  <Share2 className="w-4 h-4 text-white" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(image._id);
+                    setFullscreenImage(null);
+                  }}
+                  className="p-2 bg-white/10 hover:bg-white/20 rounded-full"
+                >
+                  <Trash2 className="w-4 h-4 text-red-400" />
+                </motion.button>
+              </div>
             </div>
           </div>
         </div>
@@ -345,33 +352,34 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
           />
         </div>
       )}
-      {/* Add padding-top to compensate for fixed navbar */}
-      <div className="min-h-screen p-4 sm:p-6 lg:p-8 pt-20">
-        <div className="max-w-[1600px] mx-auto"> {/* Increased max width */}
+      <div className="min-h-screen p-4 sm:p-6 lg:p-8 mt-16"> {/* Changed to margin-top instead of padding-top */}
+        <div className="max-w-[1600px] mx-auto">
           {!isMinimal && (
             <motion.div 
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8"
+              className="mb-8 bg-gray-900/20 backdrop-blur-sm p-4 rounded-lg" /* Simplified styling */
             >
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <h2 className="text-2xl sm:text-3xl font-bold text-white">Your Gallery</h2>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white">Your Gallery</h2>
+                  <button
+                    onClick={() => setSortNewestFirst(!sortNewestFirst)}
+                    className="flex items-center gap-2 px-3 py-1 text-sm bg-white/10 hover:bg-white/20 rounded-lg text-white/80 transition-colors"
+                  >
+                    <ArrowUpDown className="w-4 h-4" />
+                    <span>{sortNewestFirst ? "Newest" : "Oldest"}</span>
+                  </button>
+                </div>
+                
                 <button
-                  onClick={() => setSortNewestFirst(!sortNewestFirst)}
-                  className="flex items-center gap-2 px-3 py-1 text-sm bg-white/10 hover:bg-white/20 rounded-lg text-white/80 transition-colors"
+                  onClick={() => navigate('/dashboard')}
+                  className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white transition-colors"
                 >
-                  <ArrowUpDown className="w-4 h-4" />
-                  <span>{sortNewestFirst ? "Newest" : "Oldest"}</span>
+                  <PlusCircle className="w-5 h-5" />
+                  <span>Create New</span>
                 </button>
               </div>
-              
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white transition-colors"
-              >
-                <PlusCircle className="w-5 h-5" />
-                <span>Create New</span>
-              </button>
             </motion.div>
           )}
 
@@ -393,7 +401,7 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
                 </button>
               </motion.div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
                 {paginatedImages.map((image, index) => (
                   <motion.div
                     key={image._id}
@@ -401,8 +409,8 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.2, delay: index * 0.05 }}
-                    className="group relative rounded-xl overflow-hidden bg-black/5"
-                    style={{ minHeight: '300px', aspectRatio: '1/1' }}
+                    className="group relative rounded-xl overflow-hidden bg-black/5 aspect-square"
+                    style={{ height: isMinimal ? '300px' : 'auto' }}
                   >
                     <img
                       src={`${image.imageUrl.replace('/upload/', '/upload/w_800,f_auto,q_auto/')}`}
