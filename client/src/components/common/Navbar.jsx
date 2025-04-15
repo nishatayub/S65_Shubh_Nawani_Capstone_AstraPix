@@ -222,26 +222,26 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
       <div className="max-w-7xl mx-auto px-3 sm:px-6">
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo and Brand */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer">
             <div className="p-1 bg-white/10 rounded-lg">
               <Logo className="w-6 h-6 sm:w-8 sm:h-8" />
             </div>
-            <span className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+            <span className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 cursor-pointer">
               AstraPix
             </span>
           </div>
 
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
-            <a href="/" className="text-white/80 hover:text-white flex items-center space-x-1 group">
+            <a href="/" className="text-white/80 hover:text-white flex items-center space-x-1 group cursor-pointer">
               <Home className="w-4 h-4" />
               <span>Home</span>
             </a>
-            <a href="/gallery" className="text-white/80 hover:text-white flex items-center space-x-1 group">
+            <a href="/gallery" className="text-white/80 hover:text-white flex items-center space-x-1 group cursor-pointer">
               <Image className="w-4 h-4" />
               <span>Gallery</span>
             </a>
-            <a href="/generate" className="text-white/80 hover:text-white flex items-center space-x-1 group">
+            <a href="/generate" className="text-white/80 hover:text-white flex items-center space-x-1 group cursor-pointer">
               <Palette className="w-4 h-4" />
               <span>Create</span>
             </a>

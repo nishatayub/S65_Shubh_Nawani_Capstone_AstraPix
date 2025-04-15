@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Sparkles, Shield, Zap, Image, Check, Star, Crown, Rocket } from 'lucide-react';
 import Logo from './common/Logo';
 import Footer from './common/Footer';
+import LoadingAnimation from './common/LoadingAnimation';
 import landingVideo from '../assets/Landing.mp4';
 
 const LandingPage = () => {
@@ -15,15 +16,24 @@ const LandingPage = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const throttleRef = useRef(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if device is mobile
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    // Simulate minimum loading time
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const throttledScrollHandler = useCallback(() => {
@@ -51,7 +61,6 @@ const LandingPage = () => {
           await videoRef.current.play();
         } catch (error) {
           console.error("Video autoplay failed:", error);
-          // Retry with user interaction
           document.addEventListener('click', () => {
             videoRef.current?.play();
           }, { once: true });
@@ -61,7 +70,6 @@ const LandingPage = () => {
 
     initVideo();
     
-    // Keep trying to play if video stops
     const handleVisibilityChange = () => {
       if (!document.hidden && videoRef.current?.paused && !isMobile) {
         videoRef.current?.play();
@@ -73,127 +81,227 @@ const LandingPage = () => {
   }, [isMobile]);
 
   useEffect(() => {
+    let rafId;
     const handleMouseMove = (e) => {
       if (cursorRef.current) {
-        // Direct DOM manipulation for smoother cursor movement
-        cursorRef.current.style.transform = `translate3d(${e.clientX - 10}px, ${e.clientY - 10}px, 0)`;
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          const x = e.clientX - 20;
+          const y = e.clientY - 20;
+          cursorRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+          setMousePosition({ x, y });
+        });
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+    if (!isMobile) {
+      document.documentElement.classList.add('cursor-none');
+      window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    }
 
-  useEffect(() => {
-    // Prevent cursor from changing on interactive elements
-    const handleMouseOver = (e) => {
-      const target = e.target;
-      if (target.tagName === 'BUTTON' || target.tagName === 'A' || target.closest('button') || target.closest('a')) {
-        target.style.cursor = 'none';
-      }
+    return () => {
+      cancelAnimationFrame(rafId);
+      document.documentElement.classList.remove('cursor-none');
+      window.removeEventListener('mousemove', handleMouseMove);
     };
-
-    document.addEventListener('mouseover', handleMouseOver);
-    return () => document.removeEventListener('mouseover', handleMouseOver);
-  }, []);
+  }, [isMobile]);
 
   const features = [
     {
       icon: <Sparkles className="w-6 h-6 text-purple-400" />,
       title: "AI-Powered Generation",
-      description: "Create stunning images using state-of-the-art AI models"
+      description: "Create stunning images using state-of-the-art AI models with DALL-E 3 and Stable Diffusion XL integration. Achieve photorealistic quality and artistic excellence.",
+      details: ["Next-gen AI models", "Custom style transfer", "Real-time preview"]
     },
     {
       icon: <Shield className="w-6 h-6 text-purple-400" />,
-      title: "Secure Platform",
-      description: "Your creations are protected with enterprise-grade security"
+      title: "Enterprise Security",
+      description: "Your creations are protected with bank-grade encryption, secure cloud storage, and automated backups. GDPR compliant with full IP rights protection.",
+      details: ["End-to-end encryption", "GDPR compliance", "IP protection"]
     },
     {
       icon: <Zap className="w-6 h-6 text-purple-400" />,
       title: "Lightning Fast",
-      description: "Generate images in seconds with our optimized infrastructure"
+      description: "Generate images in seconds with our distributed cloud infrastructure. Optimized for both speed and quality, with smart caching and parallel processing.",
+      details: ["< 5s generation time", "Global CDN", "Smart optimization"]
     },
     {
       icon: <Image className="w-6 h-6 text-purple-400" />,
-      title: "High Quality Output",
-      description: "Get professional-grade images ready for any use case"
+      title: "Professional Quality",
+      description: "Export in ultra-high resolution formats up to 8K. Advanced upscaling technology ensures crystal-clear details perfect for commercial use.",
+      details: ["8K resolution", "RAW export", "Lossless quality"]
     }
   ];
 
   const workflowSteps = [
     {
       title: "1. Enter Your Prompt",
-      description: "Describe your vision in natural language",
-      icon: <Star className="w-8 h-8 text-yellow-400" />
+      description: "Unleash your imagination with natural language prompts. Whether you're thinking of a serene landscape, a futuristic cityscape, or an abstract concept, our AI understands context and artistic nuances to bring your vision to life.",
+      icon: <Star className="w-12 h-12 text-yellow-400" />,
+      subpoints: ["Natural language understanding", "Context-aware processing", "Multi-style support"],
+      demoImages: [
+        { 
+          src: "https://images.unsplash.com/photo-1543966888-7c1dc482a810?w=800&q=80", 
+          caption: "Write Your Vision" 
+        },
+        { 
+          src: "https://images.unsplash.com/photo-1551651653-c5186a1fbba2?w=800&q=80", 
+          caption: "Let AI Create" 
+        }
+      ]
     },
     {
       title: "2. Choose Your Style",
-      description: "Select from various artistic styles and preferences",
-      icon: <Image className="w-8 h-8 text-blue-400" />
+      description: "Explore a diverse palette of artistic styles. From Renaissance to Contemporary, Photorealistic to Abstract, customize every aspect of your creation with our extensive style library and fine-tuning options.",
+      icon: <Image className="w-12 h-12 text-blue-400" />,
+      subpoints: ["100+ artistic styles", "Custom style mixing", "Real-time preview"],
+      demoImages: [
+        { 
+          src: "https://images.unsplash.com/photo-1579762715118-a6f1d4b934f1?w=800&q=80", 
+          caption: "Browse Styles" 
+        },
+        { 
+          src: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&q=80", 
+          caption: "Apply Effects" 
+        }
+      ]
     },
     {
       title: "3. Generate & Customize",
-      description: "Fine-tune your results with our advanced tools",
-      icon: <Zap className="w-8 h-8 text-purple-400" />
+      description: "Watch as AI transforms your vision into reality. Fine-tune every detail with intuitive controls, adjust compositions, and explore variations until your artwork is perfect. Our advanced tools give you complete creative control.",
+      icon: <Zap className="w-12 h-12 text-purple-400" />,
+      subpoints: ["Real-time generation", "Advanced editing tools", "Unlimited variations"],
+      demoImages: [
+        { 
+          src: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80", 
+          caption: "Generate Art" 
+        },
+        { 
+          src: "https://images.unsplash.com/photo-1558865869-c93f6f8482af?w=800&q=80", 
+          caption: "Fine-tune Details" 
+        }
+      ]
     },
     {
       title: "4. Download & Share",
-      description: "Export in high resolution and share with the world",
-      icon: <Rocket className="w-8 h-8 text-pink-400" />
+      description: "Export your masterpiece in ultra-high resolution formats ready for any use. Share directly to social media, download for commercial projects, or add to your portfolio. Your creations, your way.",
+      icon: <Rocket className="w-12 h-12 text-pink-400" />,
+      subpoints: ["Multiple export formats", "Social sharing", "Commercial licensing"],
+      demoImages: [
+        { 
+          src: "https://images.unsplash.com/photo-1545665277-5937489579f2?w=800&q=80", 
+          caption: "Export Options" 
+        },
+        { 
+          src: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=800&q=80", 
+          caption: "Share Artwork" 
+        }
+      ]
     }
   ];
 
   const pricingPlans = [
     {
       name: "Starter",
-      price: "Free",
-      features: ["20 generations/month", "Basic styles", "720p resolution", "Community support"],
+      price: "₹0",
+      features: [
+        "15 generations/month",
+        "720p resolution",
+        "Basic art styles",
+        "Community support",
+        "24-hour generation queue",
+        "Basic prompt assistance"
+      ],
       icon: <Star className="w-6 h-6" />,
-      popular: false
+      popular: false,
+      badge: "",
+      description: "Perfect for hobbyists and beginners"
     },
     {
-      name: "Pro",
-      price: "$19/mo",
-      features: ["200 generations/month", "All styles", "4K resolution", "Priority support", "Custom styles"],
+      name: "Creator",
+      price: "₹999",
+      features: [
+        "150 generations/month",
+        "2K resolution",
+        "50+ art styles",
+        "Priority support",
+        "1-hour generation queue",
+        "Advanced prompt builder"
+      ],
+      icon: <Image className="w-6 h-6" />,
+      popular: true,
+      badge: "Most Popular",
+      description: "Ideal for content creators and artists"
+    },
+    {
+      name: "Professional",
+      price: "₹2,499",
+      features: [
+        "500 generations/month",
+        "4K resolution",
+        "All art styles",
+        "24/7 priority support",
+        "Instant generation",
+        "Custom style training"
+      ],
       icon: <Crown className="w-6 h-6" />,
-      popular: true
+      popular: false,
+      badge: "Best Value",
+      description: "For professional artists and small teams"
     },
     {
       name: "Enterprise",
-      price: "Custom",
-      features: ["Unlimited generations", "API access", "8K resolution", "Dedicated support", "Custom training"],
+      price: "Contact Us",
+      features: [
+        "Unlimited generations",
+        "8K resolution",
+        "Custom AI model training",
+        "Dedicated account manager",
+        "API access",
+        "Custom integration support"
+      ],
       icon: <Rocket className="w-6 h-6" />,
-      popular: false
+      popular: false,
+      badge: "",
+      description: "Tailored solutions for large organizations",
+      enterprise: true
     }
   ];
 
   const testimonials = [
     {
       name: "Sarah Johnson",
-      role: "Digital Artist",
+      role: "Digital Artist & Creative Director",
       image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop",
-      content: "AstraPix has revolutionized my creative workflow. The AI-generated images are stunning!"
+      content: "AstraPix has revolutionized my creative workflow. The AI understands artistic nuances I never thought possible. I've cut my concept art time by 70% while delivering better results to my clients.",
+      company: "Artscape Studios",
+      rating: 5,
+      verifiedUser: true
     },
     {
       name: "Mark Chen",
-      role: "Marketing Director",
+      role: "Senior Marketing Director",
       image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop",
-      content: "The speed and quality of images generated are unmatched. A game-changer for our campaigns."
+      content: "The speed and quality of images generated are unmatched. We're creating entire campaigns in days instead of weeks. The ROI has been incredible - it's like having an entire design team at your fingertips.",
+      company: "Global Innovations Inc.",
+      rating: 5,
+      verifiedUser: true
     },
     {
       name: "Emily Rodriguez",
-      role: "UI Designer",
+      role: "Lead UI/UX Designer",
       image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop",
-      content: "Perfect for quick mockups and creative inspiration. Couldn't work without it now!"
+      content: "Perfect for rapid prototyping and design iterations. The style consistency across generations is remarkable. We've integrated AstraPix into our daily design sprints with amazing results.",
+      company: "TechForward Solutions",
+      rating: 5,
+      verifiedUser: true
     }
   ];
 
-  // Update scroll indicator visibility
   const showScrollIndicator = useCallback(() => {
     return !isMobile && window.scrollY < window.innerHeight;
   }, [isMobile]);
 
-  // Update scroll handler
   useEffect(() => {
     const handleScroll = () => {
       if (!throttleRef.current) {
@@ -212,32 +320,39 @@ const LandingPage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  if (isLoading) {
+    return <LoadingAnimation />;
+  }
+
   return (
-    <div className={`min-h-screen relative overflow-hidden ${!isMobile ? 'cursor-none' : ''}`}>
-      {/* Custom cursor - Only show on non-mobile */}
+    <div 
+      className={`min-h-screen relative overflow-hidden overscroll-none ${!isMobile ? 'cursor-none' : ''}`}
+      style={{ 
+        overscrollBehavior: 'none',
+        touchAction: 'pan-y pinch-zoom',
+        WebkitOverflowScrolling: 'touch'
+      }}
+    >
       {!isMobile && (
         <div
           ref={cursorRef}
           className="fixed pointer-events-none z-50"
           style={{
-            width: '40px', // Increased from 32px
-            height: '40px', // Increased from 32px
-            willChange: 'transform',
+            width: '24px',
+            height: '24px',
             transform: 'translate3d(0, 0, 0)',
+            backfaceVisibility: 'hidden',
+            perspective: 1000,
+            WebkitFontSmoothing: 'antialiased'
           }}
         >
-          {/* Outer ring */}
-          <div className="absolute inset-0 rounded-full border-[3px] border-purple-500/80 animate-[spin_4s_linear_infinite] blur-[1px]" />
-          {/* Middle ring */}
-          <div className="absolute inset-2 rounded-full border-2 border-pink-400/90 animate-[spin_3s_linear_infinite_reverse]" />
-          {/* Inner dot */}
-          <div className="absolute inset-[16px] rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
+          <div className="absolute -inset-0.5 rounded-full bg-purple-500/30 animate-pulse blur-sm" />
+          <div className="absolute inset-0 rounded-full border border-purple-400" />
+          <div className="absolute inset-[30%] rounded-full bg-white/90" />
+          <div className="absolute -inset-4 rounded-full border border-purple-400/20 scale-50 animate-ping" />
         </div>
       )}
-      
-      {/* Remove Enhanced Radial Highlight div completely */}
 
-      {/* Video Background - Show gradient background on mobile */}
       <div className="fixed inset-0 -z-10">
         {isMobile ? (
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-purple-900/50 to-black" />
@@ -252,15 +367,15 @@ const LandingPage = () => {
               muted
               playsInline
               preload="auto"
-              className="w-full h-full object-cover brightness-110 contrast-110 sm:object-center object-right-center transform-gpu" // Added transform-gpu
+              className="w-full h-full object-cover brightness-110 contrast-110 sm:object-center object-right-center transform-gpu"
               style={{ 
                 willChange: 'transform, opacity',
                 height: '100vh',
                 width: '100vw',
-                objectPosition: window.innerWidth < 640 ? '70%' : 'center', // Better mobile framing
-                opacity: Math.max(0, 1 - scrollProgress * 1.5), // Fade out video
-                transform: `scale(${1 + scrollProgress * 0.1}) translateZ(0)`, // Combined transform and added translateZ
-                filter: scrollProgress > 0.1 ? `blur(${scrollProgress * 8}px)` : 'none', // Only apply blur after some scroll
+                objectPosition: window.innerWidth < 640 ? '70%' : 'center',
+                opacity: Math.max(0, 1 - scrollProgress * 1.5),
+                transform: `scale(${1 + scrollProgress * 0.1}) translateZ(0)`,
+                filter: scrollProgress > 0.1 ? `blur(${scrollProgress * 8}px)` : 'none',
               }}
               controlsList="nodownload nofullscreen noremoteplayback"
             >
@@ -273,7 +388,6 @@ const LandingPage = () => {
             </video>
           </>
         )}
-        {/* Add an overlay that becomes more visible as user scrolls */}
         <div 
           className="absolute inset-0 bg-gradient-to-b from-black to-purple-900/30 z-20"
           style={{
@@ -284,14 +398,11 @@ const LandingPage = () => {
       </div>
 
       <div className="relative z-10">
-        {/* Navigation - Add hover glow effect */}
         <nav className="fixed top-0 left-0 right-0 bg-black/30 backdrop-blur-md border-b border-white/10 z-50 cursor-none">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">  {/* Reduced from py-4 */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex justify-between items-center">
               <motion.div 
                 className="flex items-center cursor-none"
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <div className="flex items-center space-x-3">
                   <Logo className="w-10 h-10" />
@@ -305,31 +416,11 @@ const LandingPage = () => {
                   </div>
                 </div>
               </motion.div>
-              <div className="flex items-center space-x-4">
-                <motion.button
-                  onClick={() => navigate('/auth')}
-                  className="px-4 py-2 text-white/90 hover:text-white transition-all relative group cursor-none"
-                  whileHover={{ scale: 1.05, cursor: 'none' }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span className="relative z-10 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">Sign In</span>
-                  <div className="absolute inset-0 bg-white/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-                </motion.button>
-                <motion.button
-                  onClick={() => navigate('/auth')}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg relative group overflow-hidden cursor-none"
-                  whileHover={{ scale: 1.05, cursor: 'none' }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span className="relative z-10">Get Started</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-indigo-700 translate-x-full group-hover:translate-x-0 transition-transform" />
-                </motion.button>
-              </div>
+              <div className="flex items-center space-x-4"></div>
             </div>
           </div>
         </nav>
 
-        {/* Scroll Indicator - Only show when needed */}
         {showScrollIndicator() && (
           <motion.div 
             className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 cursor-none hidden md:block"
@@ -347,18 +438,15 @@ const LandingPage = () => {
           </motion.div>
         )}
 
-        {/* Add section transitions */}
-        <div className="pt-16 cursor-none"> {/* Reduced from pt-20 */}
-          {/* Hero Content */}
-          <div className="min-h-[100vh] flex items-center justify-center relative">
-            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="pt-20 space-y-24 sm:space-y-32 pb-16">
+          <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center">
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <div className="text-center">
-                {/* Main Heading */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, type: "spring" }}
-                  className="space-y-4"
+                  className="space-y-4 mb-12"
                 >
                   <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold">
                     <span className="block text-white mb-2 sm:mb-4 [text-shadow:_0_4px_12px_rgba(0,0,0,0.5)] hover:text-purple-300 transition-colors duration-300">
@@ -370,19 +458,17 @@ const LandingPage = () => {
                   </h1>
                 </motion.div>
 
-                {/* Enhanced description with better contrast and animation */}
                 <motion.p 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.2 }}
-                  className="max-w-2xl mx-auto text-lg sm:text-xl text-gray-200 leading-relaxed mb-8 px-4 [text-shadow:_0_2px_8px_rgba(0,0,0,0.5)]"
+                  className="max-w-2xl mx-auto text-base sm:text-lg text-gray-200 leading-relaxed mb-12 px-4 [text-shadow:_0_2px_8px_rgba(0,0,0,0.5)] space-y-4"
                 >
-                  Transform your ideas into stunning visuals with our 
-                  <span className="text-purple-400 font-medium"> AI-powered platform</span>. 
-                  Create unique, professional-grade artwork that captivates.
+                  <span className="block mb-4">Transform your ideas into stunning visuals with our 
+                  <span className="text-purple-400 font-medium"> AI-powered platform</span>.</span>
+                  <span className="block">Create unique, professional-grade artwork that captivates.</span>
                 </motion.p>
 
-                {/* Enhanced CTA buttons with better hover effects */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -407,238 +493,235 @@ const LandingPage = () => {
             </div>
           </div>
 
-          {/* Improved Workflow Section */}
-          <div className="pt-24 sm:pt-32"> {/* Added padding to push content down */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                className="text-center mb-12"
-              >
-                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-                  How It Works
-                </h2>
-                <p className="text-lg text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-                  Create stunning visuals in just a few simple steps
-                </p>
-              </motion.div>
-
-              {/* Step Cards with improved layout */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-                {workflowSteps.map((step, index) => (
-                  <motion.div
-                    key={step.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-black/40 backdrop-blur-md rounded-xl p-6 border border-white/10 hover:bg-black/50 transition-all cursor-none group"
-                  >
-                    <motion.div 
-                      className="mb-4 transform-gpu group-hover:scale-110 transition-transform duration-300"
-                    >
-                      {step.icon}
-                    </motion.div>
-                    <h3 className="text-xl font-semibold text-white mb-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-                      {step.title}
-                    </h3>
-                    <p className="text-gray-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] group-hover:text-gray-300 transition-colors">
-                      {step.description}
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                How It Works
+              </h2>
+              <p className="text-lg text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                Create stunning visuals in just a few simple steps
+              </p>
             </div>
-          </div>
 
-          {/* Updated grid layouts for better mobile display */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 bg-black/20">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
-              {features.map((feature, index) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileHover={{ 
-                    scale: 1.02,
-                    transition: { duration: 0.2 }
-                  }}
-                  whileInView={{ 
-                    opacity: 1, 
-                    y: 0,
-                    transition: { 
-                      type: "spring",
-                      bounce: 0.2,
-                      duration: 0.6 
-                    }
-                  }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  className="p-6 bg-black/40 backdrop-blur-md rounded-xl border border-white/20 hover:border-purple-500/50 transition-all group transform-gpu"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+              {workflowSteps.map((step) => (
+                <div
+                  key={step.title}
+                  className="bg-black/40 backdrop-blur-md rounded-xl p-8 border border-white/10 hover:bg-black/50 transition-all cursor-none group"
                 >
-                  <motion.div 
-                    className="mb-4 relative transform-gpu"
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    <div 
-                      className="absolute inset-0 bg-purple-500/20 rounded-full"
-                      style={{ 
-                        backdropFilter: 'blur(8px)',
-                        WebkitBackdropFilter: 'blur(8px)'
-                      }} 
-                    />
-                    <div className="relative z-10 transform-gpu">
-                      {feature.icon}
+                  <div className="flex flex-col space-y-6">
+                    <div className="flex items-start space-x-6">
+                      <div className="flex-shrink-0 w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center transform-gpu group-hover:scale-110 transition-transform duration-300">
+                        {step.icon}
+                      </div>
+                      <div className="flex-grow">
+                        <h3 className="text-2xl font-bold text-white mb-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                          {step.title}
+                        </h3>
+                        <p className="text-gray-300 mb-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] group-hover:text-gray-200 transition-colors">
+                          {step.description}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {step.subpoints.map((point, index) => (
+                            <span
+                              key={index}
+                              className="px-3 py-1 bg-purple-500/10 rounded-full text-sm text-purple-300 border border-purple-500/20"
+                            >
+                              {point}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  </motion.div>
-                  <h3 className="text-xl font-semibold text-white mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] group-hover:text-purple-400 transition-colors">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-                    {feature.description}
-                  </p>
-                </motion.div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {step.demoImages.map((demo, index) => (
+                        <div key={index} className="relative rounded-lg overflow-hidden group-hover:shadow-lg transition-shadow duration-300">
+                          <img
+                            src={demo.src}
+                            alt={demo.caption}
+                            className="w-full h-48 object-cover object-center transform group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0" />
+                          <span className="absolute bottom-2 left-2 text-sm text-white/90 font-medium">
+                            {demo.caption}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* Pricing Section with better mobile layout */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-center mb-16"
-            >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
               <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                 Choose Your Plan
               </h2>
               <p className="text-xl text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
                 Select the perfect plan for your creative needs
               </p>
-            </motion.div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-4 lg:gap-8">
-              {pricingPlans.map((plan, index) => (
-                <motion.div
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+              {pricingPlans.map((plan) => (
+                <div
                   key={plan.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.2 }}
                   className={`bg-black/40 backdrop-blur-md rounded-xl p-6 sm:p-8 border ${
-                    plan.popular ? 'border-purple-500' : 'border-white/20'
+                    plan.popular ? 'border-purple-500' : plan.badge === 'Best Value' ? 'border-pink-500' : 'border-white/10'
                   } relative hover:bg-black/50 transition-all cursor-none`}
                 >
-                  {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-500 text-white px-4 py-1 rounded-full text-sm">
-                      Most Popular
+                  {plan.badge && (
+                    <div className={`absolute -top-4 left-1/2 -translate-x-1/2 ${
+                      plan.badge === 'Most Popular' ? 'bg-purple-500' : 'bg-pink-500'
+                    } text-white px-4 py-1 rounded-full text-sm font-medium`}>
+                      {plan.badge}
                     </div>
                   )}
-                  <div className="flex items-center justify-center mb-6">{plan.icon}</div>
-                  <h3 className="text-2xl font-bold text-white text-center mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">{plan.name}</h3>
-                  <p className="text-3xl font-bold text-purple-400 text-center mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">{plan.price}</p>
+                  <div className="flex items-center justify-center mb-4">{plan.icon}</div>
+                  <h3 className="text-2xl font-bold text-white text-center mb-2">{plan.name}</h3>
+                  <p className="text-sm text-gray-400 text-center mb-4">{plan.description}</p>
+                  <div className="text-3xl font-bold text-purple-400 text-center mb-6">
+                    <span className="text-2xl">{plan.price}</span>
+                    {!plan.enterprise && <span className="text-lg text-gray-500">/month</span>}
+                  </div>
                   <ul className="space-y-4 mb-8">
                     {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-center text-gray-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-                        <Check className="w-5 h-5 text-purple-400 mr-2" />
-                        {feature}
+                      <li key={i} className="flex items-start space-x-3 text-gray-300">
+                        <Check className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+                        <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
                   <button
-                    onClick={() => navigate('/auth')}
-                    className={`w-full py-3 rounded-lg font-medium ${
-                      plan.popular
-                        ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                        : 'bg-white/10 hover:bg-white/20 text-white'
-                    } transition-colors`}
+                    onClick={() => navigate(plan.enterprise ? '/contact' : '/auth')}
+                    className={`w-full py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center ${
+                      plan.enterprise 
+                        ? 'bg-black/30 text-white/80 hover:text-white border border-white/10 hover:border-purple-500/20'
+                        : 'bg-white/5 hover:bg-white/10 text-white/90 hover:text-white border border-white/10 hover:border-purple-500/20'
+                    }`}
                   >
-                    Get Started
+                    <span className="inline-flex whitespace-nowrap text-center">
+                      {plan.enterprise ? 'Contact Sales' : 'Get Started'}
+                    </span>
                   </button>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* Updated testimonials for mobile */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 bg-black/20">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-3xl sm:text-4xl font-bold text-white text-center mb-16 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-            >
-              What Our Users Say
-            </motion.h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {testimonials.map((testimonial, index) => (
-                <motion.div
-                  key={testimonial.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  whileHover={{ 
-                    scale: 1.02,
-                    boxShadow: "0 0 20px rgba(168,85,247,0.2)",
-                  }}
-                  className="bg-black/40 backdrop-blur-md rounded-xl p-6 border border-white/20 transition-all group cursor-pointer cursor-none"
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                Why Choose AstraPix
+              </h2>
+              <p className="text-xl text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                Experience the future of AI-powered image generation
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
+              {features.map((feature) => (
+                <div
+                  key={feature.title}
+                  className="p-6 bg-black/40 backdrop-blur-md rounded-xl border border-white/20 hover:border-purple-500/50 transition-all group transform-gpu"
                 >
-                  <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden">
-                      <motion.img
-                        src={testimonial.image}
-                        alt={testimonial.name}
-                        className="w-full h-full object-cover"
-                        whileHover={{ scale: 1.15 }}
-                        transition={{ duration: 0.2 }}
-                      />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-white font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">{testimonial.name}</h3>
-                      <p className="text-purple-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{testimonial.role}</p>
+                  <div className="mb-4 relative transform-gpu group-hover:scale-110 transition-transform">
+                    <div className="relative z-10">
+                      {feature.icon}
                     </div>
                   </div>
-                  <p className="text-gray-300 italic drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] group-hover:text-white transition-colors">
-                    {testimonial.content}
+                  <h3 className="text-xl font-semibold text-white mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] group-hover:text-purple-400 transition-colors">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-400 mb-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                    {feature.description}
                   </p>
-                </motion.div>
+                  <div className="flex flex-wrap gap-2">
+                    {feature.details.map((detail, index) => (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-purple-500/10 rounded-full text-xs text-purple-300 border border-purple-500/20"
+                      >
+                        {detail}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* Stats Section */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white text-center mb-16 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+              What Our Users Say
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {testimonials.map((testimonial) => (
+                <div
+                  key={testimonial.name}
+                  className="bg-black/40 backdrop-blur-md rounded-xl p-6 border border-white/20 transition-all group cursor-pointer cursor-none hover:scale-102 hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]"
+                >
+                  <div className="flex items-center mb-4">
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-full overflow-hidden">
+                        <img
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      {testimonial.verifiedUser && (
+                        <div className="absolute -bottom-1 -right-1 bg-purple-500 rounded-full p-0.5">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-4">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-white font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                          {testimonial.name}
+                        </h3>
+                      </div>
+                      <p className="text-purple-400 text-sm drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                        {testimonial.role}
+                      </p>
+                      <p className="text-gray-500 text-xs">{testimonial.company}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 mb-3">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <p className="text-gray-300 italic drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] group-hover:text-white transition-colors">
+                    "{testimonial.content}"
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
               {[
                 { number: "1M+", label: "Images Generated" },
                 { number: "50K+", label: "Active Users" },
                 { number: "4.9/5", label: "User Rating" }
-              ].map((stat, index) => (
-                <motion.div
+              ].map((stat) => (
+                <div
                   key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.2 }}
+                  className="group hover:scale-110 transition-transform duration-300"
                 >
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 cursor-none"
-                  >
+                  <div className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 cursor-none">
                     {stat.number}
-                  </motion.div>
+                  </div>
                   <p className="text-gray-400 mt-2">{stat.label}</p>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* CTA Section */}
-          <motion.div 
-            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 mb-0 cursor-none"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-          >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center relative">
               <motion.div
                 className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-3xl -z-10"
@@ -665,7 +748,7 @@ const LandingPage = () => {
                 Get Started For Free
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 

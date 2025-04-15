@@ -73,9 +73,10 @@ function App() {
     <Router {...router}>
       <AuthProvider>
         <ThemeProvider>
-          <div className="min-h-screen bg-gradient-to-br from-gray-900 to-purple-900 text-white overflow-x-hidden">
+          <div className="fixed inset-0 bg-gradient-to-br from-gray-900 to-purple-900" />
+          <div className="min-h-screen text-white overflow-x-hidden relative">
             <div className="fixed inset-0 bg-grid-pattern opacity-5" />
-            <div className="relative z-10">
+            <div className="relative z-10 transition-all duration-300 ease-in-out">
               <AppRoutes />
             </div>
           </div>

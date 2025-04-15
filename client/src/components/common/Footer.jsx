@@ -2,6 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <footer className="relative z-10 py-6 sm:py-8 border-t border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -18,9 +22,9 @@ const Footer = () => {
           <div>
             <h3 className="text-base sm:text-lg font-semibold mb-3 text-white">Quick Links</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link></li>
-              <li><Link to="/gallery" className="text-white/70 hover:text-white transition-colors">Gallery</Link></li>
-              <li><Link to="/pricing" className="text-white/70 hover:text-white transition-colors">Pricing</Link></li>
+              <li><Link to="/" onClick={scrollToTop} className="text-white/70 hover:text-white transition-colors cursor-pointer">Home</Link></li>
+              <li><Link to="/gallery" onClick={scrollToTop} className="text-white/70 hover:text-white transition-colors cursor-pointer">Gallery</Link></li>
+              <li><Link to="/pricing" onClick={scrollToTop} className="text-white/70 hover:text-white transition-colors cursor-pointer">Pricing</Link></li>
             </ul>
           </div>
 
@@ -28,9 +32,9 @@ const Footer = () => {
           <div>
             <h3 className="text-base sm:text-lg font-semibold mb-3 text-white">Support</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/help" className="text-white/70 hover:text-white transition-colors">Help Center</Link></li>
-              <li><Link to="/docs" className="text-white/70 hover:text-white transition-colors">Documentation</Link></li>
-              <li><Link to="/contact" className="text-white/70 hover:text-white transition-colors">Contact Us</Link></li>
+              <li><Link to="/help" onClick={scrollToTop} className="text-white/70 hover:text-white transition-colors cursor-pointer">Help Center</Link></li>
+              <li><Link to="/docs" onClick={scrollToTop} className="text-white/70 hover:text-white transition-colors cursor-pointer">Documentation</Link></li>
+              <li><Link to="/contact" onClick={scrollToTop} className="text-white/70 hover:text-white transition-colors cursor-pointer">Contact Us</Link></li>
             </ul>
           </div>
 
@@ -38,9 +42,9 @@ const Footer = () => {
           <div>
             <h3 className="text-base sm:text-lg font-semibold mb-3 text-white">Legal</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/privacy" className="text-white/70 hover:text-white transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="text-white/70 hover:text-white transition-colors">Terms of Service</Link></li>
-              <li><Link to="/sitemap" className="text-white/70 hover:text-white transition-colors">Sitemap</Link></li>
+              <li><Link to="/privacy" onClick={scrollToTop} className="text-white/70 hover:text-white transition-colors cursor-pointer">Privacy Policy</Link></li>
+              <li><Link to="/terms" onClick={scrollToTop} className="text-white/70 hover:text-white transition-colors cursor-pointer">Terms of Service</Link></li>
+              <li><Link to="/sitemap" onClick={scrollToTop} className="text-white/70 hover:text-white transition-colors cursor-pointer">Sitemap</Link></li>
             </ul>
           </div>
         </div>

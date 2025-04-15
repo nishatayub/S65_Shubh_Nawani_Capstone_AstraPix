@@ -58,7 +58,7 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-router.post('/verify-otp', async (req, res) => {
+router.post('/auth/verify-otp', async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
     const storedData = otpStore.get(email);

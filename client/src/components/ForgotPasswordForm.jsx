@@ -38,31 +38,45 @@ const ForgotPasswordForm = ({ onBack }) => {
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    // Basic validation
+    if (otp.length !== 6) {
+      toast.error('Please enter a valid 6-digit OTP');
+      return;
+    }
+
+    if (newPassword.length < 8 || newPassword.length > 16) {
+      toast.error('Password must be between 8 and 16 characters');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      await axios.post(`${import.meta.env.VITE_BASE_URI}/api/verify-otp`, {
-        email,
-        otp,
-        newPassword
-      });
-      toast.success('Password updated successfully! Redirecting to login...', {
-        duration: 5000,
-        position: 'top-center',
-        style: {
-          background: '#333',
-          color: '#fff',
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URI}/api/auth/verify-otp`,
+        {
+          email,
+          otp,
+          newPassword
         },
-      });
-      setTimeout(() => onBack(), 2000);
+        { timeout: 8000 }
+      );
+
+      // Only show success if we actually get a success response
+      if (response.data && response.status === 200) {
+        toast.success('Password updated successfully! Redirecting to login...');
+        // Wait before redirecting
+        setTimeout(() => onBack(), 1500);
+      } else {
+        toast.error('Failed to reset password. Please try again.');
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid OTP or something went wrong. Please try again.', {
-        duration: 5000,
-        position: 'top-center',
-        style: {
-          background: '#333',
-          color: '#fff',
-        },
-      });
+      // Only show error toast if we catch an actual error
+      toast.error(error.response?.data?.message || 'Verification failed. Please try again.');
+      if (error.response?.status === 400) {
+        setOtp('');
+      }
     } finally {
       setIsSubmitting(false);
     }

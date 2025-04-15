@@ -22,30 +22,30 @@ import BackgroundImage from '../assets/bg.jpg';
 const CubeLoader = () => {
   return (
     <div className="flex justify-center items-center h-48 w-full">
-      <div className="relative" style={{ marginLeft: "-200px" }}>
+      <div className="relative" style={{ marginLeft: "-200px", willChange: "transform" }}>
         {[...Array(5)].map((_, index) => (
           <motion.div
             key={index}
             className="absolute w-8 h-8 bg-purple-500 rounded-lg shadow-lg"
             style={{
               left: index * 40,
-              top: 0
+              top: 0,
+              willChange: "transform",
+              transform: "translateZ(0)"
             }}
             animate={
               index === 4
                 ? {
-                    // Last cube follows up → left → down path
                     top: [0, -40, -40, 0],
                     left: [160, 185, -25, 0],
                     zIndex: 10
                   }
                 : {
-                    // Other cubes shift right to make space
                     left: [index * 40, (index + 1) * 40]
                   }
             }
             transition={{
-              duration: 1, // 1 second per cycle, 2 cycles in 2 seconds
+              duration: 1.5, // Slowed down slightly
               times: index === 4 
                 ? [0, 0.33, 0.67, 1] 
                 : [0, 1],
@@ -58,7 +58,6 @@ const CubeLoader = () => {
     </div>
   );
 };
-
 
 const Dashboard = () => {
   // Add ref for image generation section
@@ -272,28 +271,25 @@ const Dashboard = () => {
     />
   ), [userImages, loadingImages]);
 
-  // Get only recent images with reduced quality
+  // Optimize recent images with aggressive quality reduction and caching
   const recentImagesMemo = useMemo(() => 
     userImages.slice(0, 3).map(img => ({
         ...img,
-        imageUrl: img.imageUrl.replace('/upload/', '/upload/w_400,q_auto:low/'),
+        // More aggressive image optimization
+        imageUrl: img.imageUrl.replace('/upload/', '/upload/w_300,q_auto:eco,f_auto/'),
         generatedAt: img.generatedAt 
-            ? new Date(img.generatedAt).toLocaleDateString('en-US', {
+            ? new Intl.DateTimeFormat('en-US', {
                 year: 'numeric',
                 month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            })
+                day: 'numeric'
+            }).format(new Date(img.generatedAt))
             : 'Not available',
         createdAt: img.createdAt
-            ? new Date(img.createdAt).toLocaleDateString('en-US', {
+            ? new Intl.DateTimeFormat('en-US', {
                 year: 'numeric',
                 month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            })
+                day: 'numeric'
+            }).format(new Date(img.createdAt))
             : 'Not available'
     }))
   , [userImages]);
@@ -329,11 +325,27 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col relative bg-gradient-to-br from-gray-900 to-purple-900">
       <Toaster position="top-right" />
       
-      <div className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-gray-900/80 border-b border-white/10 shadow-lg">
+      <div 
+        className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 shadow-lg"
+        style={{ 
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          backgroundColor: "rgba(17, 24, 39, 0.8)",
+          willChange: "transform",
+          transform: "translateZ(0)"
+        }}
+      >
         {memoizedNav}
       </div>
 
-      <main className="flex-grow relative z-10 pt-20">
+      <main 
+        className="flex-grow relative z-10 pt-20"
+        style={{ 
+          willChange: "transform",
+          transform: "translateZ(0)",
+          overscrollBehavior: "contain"
+        }}
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-[1400px] overflow-x-hidden">
           <div className="space-y-8">
             <div ref={imageGenerationRef} className="bg-black/10 border border-white/10 p-4 sm:p-6 lg:p-8 rounded-xl">
@@ -359,7 +371,14 @@ const Dashboard = () => {
               </Suspense>
             </div>
 
-            <div className="bg-black/10 border border-white/10 p-6 sm:p-8 rounded-xl">
+            <div 
+              className="bg-black/10 border border-white/10 p-6 sm:p-8 rounded-xl"
+              style={{ 
+                willChange: 'transform, opacity',
+                transform: 'translateZ(0)',
+                containIntrinsicSize: '0 500px' // Add size hint
+              }}
+            >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold text-white">Recent Creations</h2>
                 {userImages.length === 0 ? (
@@ -379,16 +398,20 @@ const Dashboard = () => {
                   </button>
                 )}
               </div>
-              <Suspense fallback={<div className="h-96 animate-pulse bg-white/5 rounded-lg" />}>
-                <Gallery 
-                  key={galleryKey}
-                  images={recentImagesMemo.slice(0, 3)}
-                  loading={loadingImages}
-                  onDelete={handleDeleteImage}
-                  showHeaderFooter={false}
-                  isMinimal={true}
-                />
-              </Suspense>
+              <div className="content-visibility-auto"> {/* Add content-visibility optimization */}
+                <Suspense fallback={<div className="h-96 animate-pulse bg-white/5 rounded-lg" />}>
+                  <Gallery 
+                    key={galleryKey}
+                    images={recentImagesMemo}
+                    loading={loadingImages}
+                    onDelete={handleDeleteImage}
+                    showHeaderFooter={false}
+                    isMinimal={true}
+                    enableVirtualization={true}
+                    imageSizingHint={{ width: 300, height: 300 }}
+                  />
+                </Suspense>
+              </div>
             </div>
           </div>
         </div>
