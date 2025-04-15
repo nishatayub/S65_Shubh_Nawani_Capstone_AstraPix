@@ -495,7 +495,7 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
                         src={`${image.imageUrl}`}
                         data-src={image.imageUrl}
                         alt={image.prompt}
-                        className="w-auto h-auto max-w-full max-h-[400px] object-contain rounded-lg"
+                        className="w-auto h-auto max-w-full max-h-[400px] object-contain rounded-lg transform transition-transform duration-300 group-hover:scale-110"
                         loading="lazy"
                         ref={imageRef}
                       />

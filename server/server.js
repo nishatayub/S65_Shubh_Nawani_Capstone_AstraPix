@@ -14,6 +14,7 @@ const imageRoute = require('./routes/imageRoute');
 const profileRoute = require('./routes/profileRoute');
 const path = require('path');
 const validateEmailConfig = require('./config/emailConfig');
+const chatBot = require('./routes/chat')
 
 require('./config/passport');
 
@@ -84,6 +85,7 @@ app.use(passport.initialize());
 // app.use('/generate/generate', imageLimiter);
 // app.use('/api', apiLimiter);  // General API rate limiting
 
+app.use('/api', chatBot)
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/api', emailVerificationRoute);
 app.use('/auth', authRoute);

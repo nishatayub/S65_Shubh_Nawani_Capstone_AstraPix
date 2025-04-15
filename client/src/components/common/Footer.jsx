@@ -1,13 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
 
 const Footer = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <footer className="relative z-10 py-6 sm:py-8 border-t border-white/10">
+    <footer className="relative z-50 py-6 sm:py-8 border-t border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {/* Company Info - Full Width on Mobile */}
@@ -49,11 +57,23 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Copyright - Improved Mobile Layout */}
+        {/* Copyright with System Status and Time */}
         <div className="mt-6 sm:mt-8 pt-4 border-t border-white/10">
-          <p className="text-center text-sm text-white/70">
-            © {new Date().getFullYear()} AstraPix Inc. All rights reserved.
-          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-sm text-white/70 order-2 sm:order-1 sm:w-1/3">
+              <p>© {new Date().getFullYear()} AstraPix Inc. All rights reserved.</p>
+            </div>
+            <div className="flex items-center gap-2 order-1 sm:order-2 sm:w-1/3 justify-center">
+              <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
+              <span className="text-sm text-white/70">All Systems Operational • {currentTime.toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false 
+              })}</span>
+            </div>
+            <div className="sm:w-1/3 order-3"></div>
+          </div>
         </div>
       </div>
     </footer>
