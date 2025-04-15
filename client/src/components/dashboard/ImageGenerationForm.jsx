@@ -1,20 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Loader2, Coins } from 'lucide-react';
-
-// Add array of random prompts
-const randomPrompts = [
-  "A magical treehouse in a bioluminescent forest at night",
-  "A steampunk city floating in the clouds",
-  "A cozy cafe on Mars with Earth visible through the window",
-  "A library inhabited by ghostly readers",
-  "An underwater palace made of crystal and coral",
-  "A garden where musical instruments grow like plants",
-  "A train station for time travelers",
-  "A city where buildings are made of books",
-  "A market in the clouds where stars are sold",
-  "A laboratory where potions create different weather"
-];
+import { getRandomPrompt } from '../../utils/promptSuggestions';
 
 // Simplified animation
 const formVariants = {
@@ -23,11 +10,16 @@ const formVariants = {
 };
 
 const ImageGenerationForm = ({ prompt, setPrompt, credits, generating, generatedImage, generationError, handleGenerateImage }) => {
-  
-  const handleSurpriseMe = (e) => {
-    e.preventDefault();
-    const randomPrompt = randomPrompts[Math.floor(Math.random() * randomPrompts.length)];
+  const handleSurpriseMe = () => {
+    const randomPrompt = getRandomPrompt(prompt);
     setPrompt(randomPrompt);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleGenerateImage(e);
+    }
   };
 
   // Simple onChange handler instead of debounce
@@ -49,9 +41,11 @@ const ImageGenerationForm = ({ prompt, setPrompt, credits, generating, generated
           <textarea
             value={prompt}
             onChange={handlePromptChange}
+            onKeyDown={handleKeyDown}
             placeholder="Describe the image you want to generate..."
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/5 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/5 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base resize-none"
             rows="3"
+            disabled={generating}
           />
         </div>
 

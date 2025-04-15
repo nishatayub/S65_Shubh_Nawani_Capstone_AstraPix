@@ -5,24 +5,23 @@ import { useAuth } from '../../context/AuthContext';
 import { ThemeContext } from '../../context/ThemeContext';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PlusCircle, Loader, Download, Share2, Trash2, ArrowUpDown, X, Maximize2 } from 'lucide-react';
+import { PlusCircle, Loader, Download, Share2, Trash2, ArrowUpDown, X, Maximize2, Heart, AlertTriangle } from 'lucide-react';
 import Navbar from '../common/Navbar';
 import Footer from '../common/Footer';
 import ImageViewer from '../common/ImageViewer';
 
 const ITEMS_PER_PAGE = 6;
 
-// Simplify animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
-  show: { opacity: 1 }  // Removed staggerChildren for better performance
+  show: { opacity: 1 }
 };
 
 const itemVariants = {
   hidden: { opacity: 0 },
   show: { 
     opacity: 1,
-    transition: { duration: 0.2 }  // Reduced animation duration
+    transition: { duration: 0.2 }
   }
 };
 
@@ -30,18 +29,24 @@ const PaymentModal = lazy(() => import('../modals/PaymentModal'));
 
 const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth(); // Add logout from AuthContext
+  const { user, logout } = useAuth();
   const { darkMode, toggleTheme } = useContext(ThemeContext);
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [credits, setCredits] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [downloadProgress, setDownloadProgress] = useState({});
   const [sortNewestFirst, setSortNewestFirst] = useState(true);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [favorites, setFavorites] = useState([]);
+  const [downloadCounts, setDownloadCounts] = useState({});
+  const [shareCounts, setShareCounts] = useState({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState(null);
+  const [filterType, setFilterType] = useState('all');
 
   const fetchUserData = async () => {
     try {
@@ -74,76 +79,61 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
   }, []);
 
   const handleDelete = async (imageId) => {
-    if (deleteConfirm !== imageId) {
-      setDeleteConfirm(imageId);
-      // First click - show warning toast
-      toast((t) => (
-        <div className="flex items-center gap-2">
-          <span>⚠️ Click again to delete</span>
-        </div>
-      ), { duration: 3000 });
-      setTimeout(() => setDeleteConfirm(null), 3000);
-      return;
-    }
+    setImageToDelete(imageId);
+    setShowDeleteModal(true);
+  };
 
-    // Optimistic update
-    setImages(prevImages => prevImages.filter(img => img._id !== imageId));
-    setDeleteConfirm(null);
+  const confirmDelete = async () => {
+    if (!imageToDelete) return;
     
-    // Show immediate success feedback
-    toast.success('Image deleted successfully', {
-      icon: '🗑️',
-      style: {
-        background: '#10B981',
-        color: '#ffffff',
-        borderRadius: '8px',
-      },
-    });
-
-    // Backend sync
     try {
-      await axios.delete(`${import.meta.env.VITE_BASE_URI}/generate/${imageId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      const response = await axios.get(`${import.meta.env.VITE_BASE_URI}/generate/gallery`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      setImages(response.data.images || []);
-    } catch (error) {
-      // Revert on failure
-      const response = await axios.get(`${import.meta.env.VITE_BASE_URI}/generate/gallery`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      setImages(response.data.images || []);
+      // Optimistic update - remove from UI first
+      setImages(prevImages => prevImages.filter(img => img._id !== imageToDelete));
+      setShowDeleteModal(false);
       
-      toast.error('Failed to delete image', {
-        icon: '❌',
-        style: {
-          background: '#EF4444',
-          color: '#ffffff',
-          borderRadius: '8px',
-        },
+      // Then delete from server
+      await axios.delete(`${import.meta.env.VITE_BASE_URI}/generate/${imageToDelete}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
+      
+      setImageToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete image');
+      // Only fetch images again if delete failed
+      await fetchImages();
     }
   };
 
   const handleShare = async (image) => {
     try {
+      const response = await fetch(image.imageUrl);
+      const blob = await response.blob();
+      
+      const file = new File([blob], `astrapix-${image.prompt.slice(0, 30)
+        .replace(/[^a-z0-9]/gi, '-')
+        .toLowerCase()}.jpg`, { type: 'image/jpeg' });
+
       if (navigator.share) {
         await navigator.share({
           title: 'Check out my AI-generated image on AstraPix!',
           text: `Generated with prompt: ${image.prompt}`,
-          url: image.imageUrl
+          files: [file]
         });
         toast.success('Shared successfully');
       } else {
         await navigator.clipboard.writeText(
           `Check out this AI-generated image on AstraPix!\n\nPrompt: ${image.prompt}\n\nLink: ${image.imageUrl}`
         );
-        toast.success('Share link copied to clipboard');
+        toast.success('Share link copied to clipboard (File sharing not supported in this browser)');
       }
+
+      setShareCounts(prev => ({
+        ...prev,
+        [image._id]: (prev[image._id] || 0) + 1
+      }));
     } catch (error) {
       if (error.name === 'AbortError') return;
+      console.error('Share error:', error);
       toast.error('Failed to share image');
     }
   };
@@ -170,6 +160,11 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
       window.URL.revokeObjectURL(url);
       
       toast.success('Download started');
+
+      setDownloadCounts(prev => ({
+        ...prev,
+        [image._id]: (prev[image._id] || 0) + 1
+      }));
     } catch (error) {
       toast.error('Failed to download image');
       console.error('Download error:', error);
@@ -180,7 +175,14 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
 
   useEffect(() => {
     refreshData();
-  }, []); // Run once when component mounts
+  }, []);
+
+  useEffect(() => {
+    const savedFavorites = localStorage.getItem('galleryFavorites');
+    if (savedFavorites) {
+      setFavorites(JSON.parse(savedFavorites));
+    }
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -189,11 +191,10 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
 
   const handleCreditUpdate = async (newCredits) => {
     setCredits(newCredits);
-    await refreshData(); // Refresh data after credit update
+    await refreshData();
     toast.success(`Credits updated! New balance: ${newCredits}`);
   };
 
-  // Optimize image loading with IntersectionObserver
   const imageRef = useCallback(node => {
     if (!node) return;
     
@@ -214,7 +215,6 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
     return () => observer.disconnect();
   }, []);
 
-  // Optimize sorted images calculation
   const sortedImages = useMemo(() => {
     if (!images?.length) return [];
     return [...images].sort((a, b) => {
@@ -224,16 +224,37 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
     });
   }, [images, sortNewestFirst]);
 
+  const filteredImages = useMemo(() => {
+    if (filterType === 'favorites') {
+      return sortedImages.filter(img => favorites.includes(img._id));
+    }
+    if (!searchTerm) return sortedImages;
+    return sortedImages.filter(img => 
+      img.prompt.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [sortedImages, searchTerm, filterType, favorites]);
+
   const paginatedImages = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return sortedImages.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [sortedImages, currentPage]);
+    return filteredImages.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredImages, currentPage]);
 
-  // Optimize image loading
+  const toggleFavorite = useCallback((imageId) => {
+    setFavorites(prev => {
+      const isFavorite = prev.includes(imageId);
+      const newFavorites = isFavorite
+        ? prev.filter(id => id !== imageId)
+        : [...prev, imageId];
+      
+      localStorage.setItem('galleryFavorites', JSON.stringify(newFavorites));
+      return newFavorites;
+    });
+  }, []);
+
   const optimizedImages = useMemo(() => 
     paginatedImages.map(img => ({
       ...img,
-      imageUrl: img.imageUrl.replace('/upload/', '/upload/w_400,f_auto,q_auto:low/') // Lower quality for better performance
+      imageUrl: img.imageUrl.replace('/upload/', '/upload/w_400,f_auto,q_auto:low/')
     }))
   , [paginatedImages]);
 
@@ -242,69 +263,103 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
       onClick={() => setFullscreenImage(null)}
     >
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="relative w-full max-w-5xl mx-auto my-8"
+        className="relative w-full h-full max-w-7xl mx-auto flex flex-col items-center justify-center"
         onClick={e => e.stopPropagation()}
       >
         <motion.button
           whileHover={{ scale: 1.1 }}
           onClick={() => setFullscreenImage(null)}
-          className="absolute -top-12 right-0 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white z-50"
+          className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white z-50"
         >
           <X className="w-5 h-5" />
         </motion.button>
 
-        <div className="bg-gray-900/90 rounded-lg overflow-hidden backdrop-blur-sm">
-          <div className="max-h-[80vh] overflow-y-auto">
-            <img
-              src={image.imageUrl}
-              alt={image.prompt}
-              className="w-full h-auto max-h-[70vh] object-contain"
-            />
-            
-            <div className="sticky bottom-0 w-full p-4 border-t border-white/10 bg-gray-900/95 backdrop-blur-md">
-              <p className="text-white/90 text-sm mb-3">{image.prompt}</p>
-              <div className="flex items-center justify-center gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownload(image);
-                  }}
-                  className="p-2 bg-white/10 hover:bg-white/20 rounded-full"
-                >
-                  <Download className="w-4 h-4 text-white" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleShare(image);
-                  }}
-                  className="p-2 bg-white/10 hover:bg-white/20 rounded-full"
-                >
-                  <Share2 className="w-4 h-4 text-white" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(image._id);
-                    setFullscreenImage(null);
-                  }}
-                  className="p-2 bg-white/10 hover:bg-white/20 rounded-full"
-                >
-                  <Trash2 className="w-4 h-4 text-red-400" />
-                </motion.button>
-              </div>
-            </div>
+        <div className="relative w-full h-full flex items-center justify-center p-4">
+          <img
+            src={image.imageUrl}
+            alt={image.prompt}
+            className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg"
+          />
+        </div>
+
+        <div className="w-full max-w-3xl mx-auto p-4 bg-gray-900/95 backdrop-blur-md rounded-lg mt-4">
+          <p className="text-white/90 text-sm mb-3">{image.prompt}</p>
+          <div className="flex items-center justify-center gap-4">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDownload(image);
+              }}
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-full"
+            >
+              <Download className="w-4 h-4 text-white" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleShare(image);
+              }}
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-full"
+            >
+              <Share2 className="w-4 h-4 text-white" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(image._id);
+                setFullscreenImage(null);
+              }}
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-full"
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+            </motion.button>
           </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+
+  const DeleteConfirmationModal = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+    >
+      <motion.div
+        initial={{ scale: 0.95 }}
+        animate={{ scale: 1 }}
+        exit={{ scale: 0.95 }}
+        className="bg-gray-900 border border-purple-500/20 rounded-lg p-6 max-w-sm w-full shadow-xl backdrop-blur-sm"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <AlertTriangle className="w-6 h-6 text-yellow-500" />
+          <h3 className="text-lg font-semibold text-white">Confirm Deletion</h3>
+        </div>
+        <p className="text-white/70 mb-6">Are you sure you want to delete this image? This action cannot be undone.</p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => setShowDeleteModal(false)}
+            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={confirmDelete}
+            className="px-4 py-2 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition-colors"
+          >
+            Delete
+          </button>
         </div>
       </motion.div>
     </motion.div>
@@ -352,38 +407,62 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
           />
         </div>
       )}
-      <div className="min-h-screen p-4 sm:p-6 lg:p-8 mt-16"> {/* Changed to margin-top instead of padding-top */}
-        <div className="max-w-[1600px] mx-auto">
+      <div className="min-h-screen p-4 sm:p-6 lg:p-8 mt-16 bg-gradient-to-b from-gray-800/50 via-gray-900/30 to-purple-900/20 backdrop-blur-lg"> 
+        <div className="max-w-6xl mx-auto relative z-10">
           {!isMinimal && (
             <motion.div 
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8 bg-gray-900/20 backdrop-blur-sm p-4 rounded-lg" /* Simplified styling */
+              className="mb-6 bg-gray-800/30 backdrop-blur-xl p-4 rounded-lg border border-purple-500/10 shadow-xl"
             >
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-grow">
                   <h2 className="text-2xl sm:text-3xl font-bold text-white">Your Gallery</h2>
-                  <button
-                    onClick={() => setSortNewestFirst(!sortNewestFirst)}
-                    className="flex items-center gap-2 px-3 py-1 text-sm bg-white/10 hover:bg-white/20 rounded-lg text-white/80 transition-colors"
-                  >
-                    <ArrowUpDown className="w-4 h-4" />
-                    <span>{sortNewestFirst ? "Newest" : "Oldest"}</span>
-                  </button>
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <input
+                      type="text"
+                      placeholder="Search prompts..."
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      className="w-full sm:w-64 px-3 py-1.5 bg-white/10 rounded-lg text-white placeholder:text-white/50 focus:outline-none focus:ring-1 focus:ring-purple-500 text-sm"
+                    />
+                    <button
+                      onClick={() => setSortNewestFirst(!sortNewestFirst)}
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm bg-white/10 hover:bg-white/20 rounded-lg text-white/80 transition-colors"
+                    >
+                      <ArrowUpDown className="w-4 h-4" />
+                      <span>{sortNewestFirst ? "Newest" : "Oldest"}</span>
+                    </button>
+                  </div>
                 </div>
                 
-                <button
-                  onClick={() => navigate('/dashboard')}
-                  className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white transition-colors"
-                >
-                  <PlusCircle className="w-5 h-5" />
-                  <span>Create New</span>
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setFilterType(filterType === 'all' ? 'favorites' : 'all')}
+                    className={`flex items-center justify-center px-3 py-1.5 rounded-lg transition-colors ${
+                      filterType === 'favorites'
+                        ? 'bg-purple-500/30 text-purple-300'
+                        : 'bg-white/10 hover:bg-white/20 text-white/80'
+                    }`}
+                  >
+                    <Heart className={`w-4 h-4 ${filterType === 'favorites' ? 'fill-purple-300' : ''}`} />
+                    <span className="ml-2">Favorites</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className="flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white transition-colors"
+                  >
+                    <PlusCircle className="w-5 h-5" />
+                    <span>Create New</span>
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
 
-          {/* Main gallery grid */}
           <AnimatePresence mode="wait">
             {!images.length ? (
               <motion.div 
@@ -401,7 +480,7 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
                 </button>
               </motion.div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {paginatedImages.map((image, index) => (
                   <motion.div
                     key={image._id}
@@ -409,21 +488,49 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.2, delay: index * 0.05 }}
-                    className="group relative rounded-xl overflow-hidden bg-black/5 aspect-square"
-                    style={{ height: isMinimal ? '300px' : 'auto' }}
+                    className="group relative rounded-xl overflow-hidden bg-black/20 backdrop-blur-sm border border-white/5 shadow-lg min-h-[200px] flex items-center"
                   >
-                    <img
-                      src={`${image.imageUrl.replace('/upload/', '/upload/w_800,f_auto,q_auto/')}`}
-                      data-src={image.imageUrl}
-                      alt={image.prompt}
-                      className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
-                      loading="lazy"
-                      ref={imageRef}
-                    />
+                    <div className="relative w-full h-full flex items-center justify-center p-4">
+                      <img
+                        src={`${image.imageUrl}`}
+                        data-src={image.imageUrl}
+                        alt={image.prompt}
+                        className="w-auto h-auto max-w-full max-h-[400px] object-contain rounded-lg"
+                        loading="lazy"
+                        ref={imageRef}
+                      />
+                    </div>
                     
-                    {/* Image Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <button
+                            onClick={() => toggleFavorite(image._id)}
+                            className={`p-2 rounded-full ${
+                              favorites.includes(image._id) 
+                                ? 'bg-purple-500/30' 
+                                : 'bg-white/20'
+                            }`}
+                          >
+                            <Heart 
+                              className={`w-4 h-4 ${
+                                favorites.includes(image._id) 
+                                  ? 'text-purple-400 fill-purple-400' 
+                                  : 'text-white'
+                              }`} 
+                            />
+                          </button>
+                          {downloadCounts[image._id] > 0 && (
+                            <span className="text-xs text-white/60">
+                              {downloadCounts[image._id]} downloads
+                            </span>
+                          )}
+                          {shareCounts[image._id] > 0 && (
+                            <span className="text-xs text-white/60">
+                              {shareCounts[image._id]} shares
+                            </span>
+                          )}
+                        </div>
                         <p className="text-white text-xs sm:text-sm line-clamp-2 mb-2 sm:mb-3">
                           {image.prompt}
                         </p>
@@ -464,29 +571,64 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
             )}
           </AnimatePresence>
 
-          {!isMinimal && images.length > ITEMS_PER_PAGE && (
+          <AnimatePresence>
+            {showDeleteModal && <DeleteConfirmationModal />}
+          </AnimatePresence>
+
+          {!isMinimal && filteredImages.length > ITEMS_PER_PAGE && (
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="mt-8 flex justify-center gap-2"
+              className="mt-6 flex items-center justify-center gap-2"
             >
-              {Array.from({ length: Math.ceil(images.length / ITEMS_PER_PAGE) })
-                .slice(Math.max(0, currentPage - 3), Math.min(currentPage + 2, Math.ceil(images.length / ITEMS_PER_PAGE)))
-                .map((_, idx) => (
-                  <motion.button
-                    key={idx}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setCurrentPage(idx + 1)}
-                    className={`px-3 py-1 rounded ${
-                      currentPage === idx + 1 
-                        ? 'bg-purple-600 text-white' 
-                        : 'bg-white/10 text-white/60 hover:bg-white/20'
-                    }`}
-                  >
-                    {idx + 1}
-                  </motion.button>
-                ))}
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 rounded bg-white/10 text-white/60 hover:bg-white/20 disabled:opacity-50 disabled:hover:bg-white/10"
+              >
+                Previous
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.ceil(filteredImages.length / ITEMS_PER_PAGE) })
+                  .map((_, idx) => {
+                    if (
+                      idx === 0 || 
+                      idx === Math.ceil(filteredImages.length / ITEMS_PER_PAGE) - 1 ||
+                      (idx >= currentPage - 2 && idx <= currentPage)
+                    ) {
+                      return (
+                        <motion.button
+                          key={idx}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setCurrentPage(idx + 1)}
+                          className={`min-w-[32px] px-3 py-1 rounded ${
+                            currentPage === idx + 1 
+                              ? 'bg-purple-600 text-white' 
+                              : 'bg-white/10 text-white/60 hover:bg-white/20'
+                          }`}
+                        >
+                          {idx + 1}
+                        </motion.button>
+                      );
+                    } else if (
+                      idx === currentPage - 3 || 
+                      idx === currentPage + 1
+                    ) {
+                      return <span key={idx} className="text-white/40">...</span>;
+                    }
+                    return null;
+                  }).filter(Boolean)}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredImages.length / ITEMS_PER_PAGE), prev + 1))}
+                disabled={currentPage === Math.ceil(filteredImages.length / ITEMS_PER_PAGE)}
+                className="px-3 py-1 rounded bg-white/10 text-white/60 hover:bg-white/20 disabled:opacity-50 disabled:hover:bg-white/10"
+              >
+                Next
+              </button>
             </motion.div>
           )}
 
@@ -494,15 +636,14 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
             <motion.p 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center text-white/60 mt-8"
+              className="text-center text-white/60 mt-4 mb-6"
             >
-              Showing {paginatedImages.length} of {images.length} image{images.length !== 1 ? 's' : ''}
+              Showing {paginatedImages.length} of {filteredImages.length} image{filteredImages.length !== 1 ? 's' : ''}
             </motion.p>
           )}
         </div>
       </div>
 
-      {/* Add PaymentModal */}
       {isPaymentModalOpen && (
         <Suspense fallback={<div className="fixed inset-0 bg-black/50" />}>
           <PaymentModal
@@ -518,7 +659,6 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
   );
 };
 
-// Helper component for action buttons
 const ActionButton = ({ icon, onClick, danger = false }) => (
   <motion.button
     whileTap={{ scale: 0.95 }}

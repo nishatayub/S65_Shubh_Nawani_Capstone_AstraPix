@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useContext, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useContext, Suspense, lazy, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
@@ -19,7 +19,51 @@ const StatsGrid = lazy(() => import('./dashboard/StatsGrid'));
 // Assets
 import BackgroundImage from '../assets/bg.jpg';
 
+const CubeLoader = () => {
+  return (
+    <div className="flex justify-center items-center h-48 w-full">
+      <div className="relative" style={{ marginLeft: "-200px" }}>
+        {[...Array(5)].map((_, index) => (
+          <motion.div
+            key={index}
+            className="absolute w-8 h-8 bg-purple-500 rounded-lg shadow-lg"
+            style={{
+              left: index * 40,
+              top: 0
+            }}
+            animate={
+              index === 4
+                ? {
+                    // Last cube follows up → left → down path
+                    top: [0, -40, -40, 0],
+                    left: [160, 185, -25, 0],
+                    zIndex: 10
+                  }
+                : {
+                    // Other cubes shift right to make space
+                    left: [index * 40, (index + 1) * 40]
+                  }
+            }
+            transition={{
+              duration: 1, // 1 second per cycle, 2 cycles in 2 seconds
+              times: index === 4 
+                ? [0, 0.33, 0.67, 1] 
+                : [0, 1],
+              ease: "linear",
+              repeat: Infinity
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
 const Dashboard = () => {
+  // Add ref for image generation section
+  const imageGenerationRef = useRef(null);
+
   // Auth and Theme Context
   const { user, logout } = useAuth();
   const { darkMode, toggleTheme } = useContext(ThemeContext);
@@ -56,13 +100,16 @@ const Dashboard = () => {
         axios.get(`${import.meta.env.VITE_BASE_URI}/check/credits/${user.email}`, { ...authHeaders, signal }),
         axios.get(`${import.meta.env.VITE_BASE_URI}/generate/gallery`, { ...authHeaders, signal })
       ]).then(([creditResponse, imagesResponse]) => {
-        setCredits(creditResponse.data.credit);
-        setUserImages(imagesResponse.data.images);
+        // Set credits to 0 if no creditModel exists
+        setCredits(creditResponse.data?.credit || 0);
+        setUserImages(imagesResponse.data?.images || []);
         setLoading(false);
         setLoadingImages(false);
       }).catch(err => {
         if (!signal.aborted) {
-          setError('Failed to fetch data');
+          // Don't show error, just set defaults
+          setCredits(0);
+          setUserImages([]);
           setLoading(false);
           setLoadingImages(false);
         }
@@ -70,7 +117,9 @@ const Dashboard = () => {
 
       return () => controller.abort();
     } catch (err) {
-      setError('Failed to fetch data');
+      // Don't show error, just set defaults
+      setCredits(0);
+      setUserImages([]);
       setLoading(false);
       setLoadingImages(false);
     }
@@ -98,7 +147,7 @@ const Dashboard = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitializing(false);
-    }, 800);
+    }, 2000); // Changed from 4000ms to 2000ms to show loader for 2 seconds
     return () => clearTimeout(timer);
   }, []);
 
@@ -109,7 +158,7 @@ const Dashboard = () => {
   };
 
   const handleLogout = () => {
-    logout();
+    logout(); // Call auth context logout
     localStorage.removeItem('token');
     toast.success('Successfully logged out!', {
       duration: 2000,
@@ -120,10 +169,8 @@ const Dashboard = () => {
       },
     });
 
-    // Delete token and delay navigation
-    setTimeout(() => {
-      window.location.href = '/auth';  // Using window.location instead of navigate
-    }, 1000);
+    // Use navigate instead of window.location
+    navigate('/auth');
   };
 
   const handleDeleteImage = async (imageId) => {
@@ -187,6 +234,10 @@ const Dashboard = () => {
     }
 }, [prompt, credits, generating, user?._id, authHeaders, fetchGalleryImages]);
 
+  const scrollToGeneration = () => {
+    imageGenerationRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   // Memoized components
   const memoizedNav = useMemo(() => (
     <Navbar 
@@ -249,12 +300,28 @@ const Dashboard = () => {
 
   if (isInitializing) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-gray-900 to-purple-900 flex items-center justify-center">
-        <div className="space-y-4 text-center">
-          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-white/80 text-sm">Setting up your workspace...</p>
-        </div>
-      </div>
+      <motion.div 
+        initial={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-gradient-to-br from-gray-900 to-purple-900 flex flex-col items-center justify-center"
+      >
+        <motion.div 
+          className="space-y-8 text-center"
+          initial={{ scale: 0.9 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <CubeLoader />
+          <motion.p 
+            className="text-white/80 text-lg font-medium"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            Preparing your creative space...
+          </motion.p>
+        </motion.div>
+      </motion.div>
     );
   }
 
@@ -269,7 +336,7 @@ const Dashboard = () => {
       <main className="flex-grow relative z-10 pt-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-[1400px] overflow-x-hidden">
           <div className="space-y-8">
-            <div className="bg-black/10 border border-white/10 p-4 sm:p-6 lg:p-8 rounded-xl">
+            <div ref={imageGenerationRef} className="bg-black/10 border border-white/10 p-4 sm:p-6 lg:p-8 rounded-xl">
               <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-white">
                 Image Generation
               </h2>
@@ -295,12 +362,22 @@ const Dashboard = () => {
             <div className="bg-black/10 border border-white/10 p-6 sm:p-8 rounded-xl">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold text-white">Recent Creations</h2>
-                <button
-                  onClick={() => navigate('/gallery')}
-                  className="text-purple-400 hover:text-purple-300"
-                >
-                  View All →
-                </button>
+                {userImages.length === 0 ? (
+                  <button
+                    onClick={scrollToGeneration}
+                    className="text-purple-400 hover:text-purple-300 flex items-center gap-2"
+                  >
+                    Create your first image
+                    <span aria-hidden="true">↑</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate('/gallery')}
+                    className="text-purple-400 hover:text-purple-300"
+                  >
+                    View All →
+                  </button>
+                )}
               </div>
               <Suspense fallback={<div className="h-96 animate-pulse bg-white/5 rounded-lg" />}>
                 <Gallery 

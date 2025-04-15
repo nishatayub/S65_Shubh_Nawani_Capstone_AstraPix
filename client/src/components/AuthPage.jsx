@@ -1,7 +1,7 @@
 import React, { useState, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Sun, Moon, Loader2, Mail } from 'lucide-react';
+import { Sun, Moon, Loader2, Mail } from 'lucide-react'; // Removed Eye, EyeOff since they're in AuthForm
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import BackgroundImage from '../assets/bg.jpg';
@@ -143,6 +143,15 @@ const AuthPage = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      {/* Back to Landing button with improved visibility */}
+      <button
+        onClick={() => navigate('/')}
+        className="fixed top-4 left-4 z-50 px-6 py-3 rounded-full bg-purple-600 hover:bg-purple-700 transition-all text-white flex items-center gap-2 touch-manipulation font-semibold shadow-lg"
+      >
+        <span className="text-lg">←</span>
+        <span>Return to Landing</span>
+      </button>
+
       {/* Background with optimized loading */}
       <div 
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat" 

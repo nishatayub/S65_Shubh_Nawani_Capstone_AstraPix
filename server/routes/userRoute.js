@@ -83,7 +83,7 @@ router.post('/verify-otp', async (req, res) => {
   }
 });
 
-router.post('/update-username', async (req, res) => {
+router.put('/update-username', async (req, res) => {
     try {
       const { email, newUsername } = req.body;
       const user = await User.findOneAndUpdate(
