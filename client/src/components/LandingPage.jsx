@@ -6,6 +6,7 @@ import Logo from './common/Logo';
 import Footer from './common/Footer';
 import LoadingAnimation from './common/LoadingAnimation';
 import landingVideo from '../assets/Landing.mp4';
+import ChatBot from './common/ChatBot';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -333,6 +334,7 @@ const LandingPage = () => {
         WebkitOverflowScrolling: 'touch'
       }}
     >
+      <ChatBot />
       {!isMobile && (
         <div
           ref={cursorRef}
