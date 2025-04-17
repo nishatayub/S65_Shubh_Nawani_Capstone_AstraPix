@@ -400,25 +400,23 @@ const LandingPage = () => {
       </div>
 
       <div className="relative z-10">
-        <nav className="fixed top-0 left-0 right-0 bg-black/30 backdrop-blur-md border-b border-white/10 z-50 cursor-none">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <nav className="fixed top-0 left-0 right-0 bg-black/30 backdrop-blur-md border-b border-white/10 z-50">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-2 sm:py-3">
             <div className="flex justify-between items-center">
-              <motion.div 
-                className="flex items-center cursor-none"
-              >
-                <div className="flex items-center space-x-3">
-                  <Logo className="w-10 h-10" />
+              <motion.div className={isMobile ? "" : "cursor-none"}>
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <Logo className="w-8 h-8 sm:w-10 sm:h-10" />
                   <div className="flex flex-col">
-                    <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                    <span className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
                       AstraPix
                     </span>
-                    <span className="text-xs font-medium text-purple-400/80">
+                    <span className="text-xs font-medium text-purple-400/80 hidden sm:inline-block">
                       Generate. Create. Elevate.
                     </span>
                   </div>
                 </div>
               </motion.div>
-              <div className="flex items-center space-x-4"></div>
+              <div className="flex items-center space-x-2 sm:space-x-4"></div>
             </div>
           </div>
         </nav>
@@ -440,18 +438,18 @@ const LandingPage = () => {
           </motion.div>
         )}
 
-        <div className="pt-20 space-y-24 sm:space-y-32 pb-16">
+        <div className="pt-16 sm:pt-20 space-y-16 sm:space-y-24 md:space-y-32 pb-16">
           <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center">
-            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
               <div className="text-center">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, type: "spring" }}
-                  className="space-y-4 mb-12"
+                  className="space-y-2 sm:space-y-4 mb-8 sm:mb-12"
                 >
-                  <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold">
-                    <span className="block text-white mb-2 sm:mb-4 [text-shadow:_0_4px_12px_rgba(0,0,0,0.5)] hover:text-purple-300 transition-colors duration-300">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-bold">
+                    <span className="block text-white mb-1 sm:mb-2 md:mb-4 [text-shadow:_0_4px_12px_rgba(0,0,0,0.5)] hover:text-purple-300 transition-colors duration-300">
                       Unleash Your
                     </span>
                     <span className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 transition-all duration-300 [text-shadow:_2px_2px_20px_rgba(168,85,247,0.4)]">
@@ -464,9 +462,9 @@ const LandingPage = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.2 }}
-                  className="max-w-2xl mx-auto text-base sm:text-lg text-gray-200 leading-relaxed mb-12 px-4 [text-shadow:_0_2px_8px_rgba(0,0,0,0.5)] space-y-4"
+                  className="max-w-2xl mx-auto text-sm sm:text-base md:text-lg text-gray-200 leading-relaxed mb-8 sm:mb-12 px-4 [text-shadow:_0_2px_8px_rgba(0,0,0,0.5)] space-y-2 sm:space-y-4"
                 >
-                  <span className="block mb-4">Transform your ideas into stunning visuals with our 
+                  <span className="block mb-2 sm:mb-4">Transform your ideas into stunning visuals with our 
                   <span className="text-purple-400 font-medium"> AI-powered platform</span>.</span>
                   <span className="block">Create unique, professional-grade artwork that captivates.</span>
                 </motion.p>
@@ -475,20 +473,20 @@ const LandingPage = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.3 }}
-                  className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 px-4"
+                  className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 md:space-x-6 px-4"
                 >
                   <button
                     onClick={() => navigate('/auth')}
-                    className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 group transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-purple-500/25"
+                    className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 group transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-purple-500/25 touch-manipulation"
                   >
-                    <span className="text-lg">Start Creating</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <span className="text-base sm:text-lg">Start Creating</span>
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button
                     onClick={() => navigate('/gallery')}
-                    className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transform hover:scale-105 transition-all duration-300 border border-white/20 hover:border-purple-500/50"
+                    className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transform hover:scale-105 transition-all duration-300 border border-white/20 hover:border-purple-500/50 touch-manipulation"
                   >
-                    <span className="text-lg">View Gallery</span>
+                    <span className="text-base sm:text-lg">View Gallery</span>
                   </button>
                 </motion.div>
               </div>
@@ -496,38 +494,38 @@ const LandingPage = () => {
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+            <div className="text-center mb-8 sm:mb-16">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                 How It Works
               </h2>
-              <p className="text-lg text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+              <p className="text-base sm:text-lg text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
                 Create stunning visuals in just a few simple steps
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 lg:gap-12">
               {workflowSteps.map((step) => (
                 <div
                   key={step.title}
-                  className="bg-black/40 backdrop-blur-md rounded-xl p-8 border border-white/10 hover:bg-black/50 transition-all cursor-none group"
+                  className="bg-black/40 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/10 hover:bg-black/50 transition-all group"
                 >
-                  <div className="flex flex-col space-y-6">
-                    <div className="flex items-start space-x-6">
-                      <div className="flex-shrink-0 w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center transform-gpu group-hover:scale-110 transition-transform duration-300">
+                  <div className="flex flex-col space-y-4 sm:space-y-6">
+                    <div className="flex items-start space-x-3 sm:space-x-6">
+                      <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-purple-500/10 flex items-center justify-center transform-gpu group-hover:scale-110 transition-transform duration-300">
                         {step.icon}
                       </div>
                       <div className="flex-grow">
-                        <h3 className="text-2xl font-bold text-white mb-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                        <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                           {step.title}
                         </h3>
-                        <p className="text-gray-300 mb-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] group-hover:text-gray-200 transition-colors">
+                        <p className="text-sm sm:text-base text-gray-300 mb-3 sm:mb-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] group-hover:text-gray-200 transition-colors">
                           {step.description}
                         </p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1 sm:gap-2">
                           {step.subpoints.map((point, index) => (
                             <span
                               key={index}
-                              className="px-3 py-1 bg-purple-500/10 rounded-full text-sm text-purple-300 border border-purple-500/20"
+                              className="px-2 sm:px-3 py-0.5 sm:py-1 bg-purple-500/10 rounded-full text-xs sm:text-sm text-purple-300 border border-purple-500/20"
                             >
                               {point}
                             </span>
@@ -535,16 +533,17 @@ const LandingPage = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                       {step.demoImages.map((demo, index) => (
                         <div key={index} className="relative rounded-lg overflow-hidden group-hover:shadow-lg transition-shadow duration-300">
                           <img
                             src={demo.src}
                             alt={demo.caption}
-                            className="w-full h-48 object-cover object-center transform group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-32 sm:h-48 object-cover object-center transform group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0" />
-                          <span className="absolute bottom-2 left-2 text-sm text-white/90 font-medium">
+                          <span className="absolute bottom-2 left-2 text-xs sm:text-sm text-white/90 font-medium">
                             {demo.caption}
                           </span>
                         </div>
@@ -557,92 +556,112 @@ const LandingPage = () => {
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-                Choose Your Plan
-              </h2>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-                Select the perfect plan for your creative needs
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-              {pricingPlans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`bg-black/40 backdrop-blur-md rounded-xl p-6 sm:p-8 border ${
-                    plan.popular ? 'border-purple-500' : plan.badge === 'Best Value' ? 'border-pink-500' : 'border-white/10'
-                  } relative hover:bg-black/50 transition-all cursor-none`}
-                >
-                  {plan.badge && (
-                    <div className={`absolute -top-4 left-1/2 -translate-x-1/2 ${
-                      plan.badge === 'Most Popular' ? 'bg-purple-500' : 'bg-pink-500'
-                    } text-white px-4 py-1 rounded-full text-sm font-medium`}>
-                      {plan.badge}
-                    </div>
-                  )}
-                  <div className="flex items-center justify-center mb-4">{plan.icon}</div>
-                  <h3 className="text-2xl font-bold text-white text-center mb-2">{plan.name}</h3>
-                  <p className="text-sm text-gray-400 text-center mb-4">{plan.description}</p>
-                  <div className="text-3xl font-bold text-purple-400 text-center mb-6">
-                    <span className="text-2xl">{plan.price}</span>
-                    {!plan.enterprise && <span className="text-lg text-gray-500">/month</span>}
-                  </div>
-                  <ul className="space-y-4 mb-8">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-start space-x-3 text-gray-300">
-                        <Check className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    onClick={() => navigate(plan.enterprise ? '/contact' : '/auth')}
-                    className={`w-full py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center ${
-                      plan.enterprise 
-                        ? 'bg-black/30 text-white/80 hover:text-white border border-white/10 hover:border-purple-500/20'
-                        : 'bg-white/5 hover:bg-white/10 text-white/90 hover:text-white border border-white/10 hover:border-purple-500/20'
-                    }`}
-                  >
-                    <span className="inline-flex whitespace-nowrap text-center">
-                      {plan.enterprise ? 'Contact Sales' : 'Get Started'}
-                    </span>
-                  </button>
-                </div>
-              ))}
-            </div>
+  <div className="text-center mb-8 sm:mb-16">
+    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+      Choose Your Plan
+    </h2>
+    <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+      Select the perfect plan for your creative needs
+    </p>
+  </div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+    {pricingPlans.map((plan) => (
+      <div
+        key={plan.name}
+        className={`bg-black/40 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border ${
+          plan.popular
+            ? "border-purple-500"
+            : plan.badge === "Best Value"
+            ? "border-pink-500"
+            : "border-white/10"
+        } relative hover:bg-black/50 transition-all touch-manipulation flex flex-col`}
+      >
+        {plan.badge && (
+          <div
+            className={`absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 ${
+              plan.badge === "Most Popular"
+                ? "bg-purple-500"
+                : "bg-pink-500"
+            } text-white px-3 sm:px-4 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium`}
+          >
+            {plan.badge}
           </div>
+        )}
+        <div className="flex items-center justify-center mb-3 sm:mb-4">
+          {plan.icon}
+        </div>
+        <h3 className="text-xl sm:text-2xl font-bold text-white text-center mb-1 sm:mb-2">
+          {plan.name}
+        </h3>
+        <p className="text-xs sm:text-sm text-gray-400 text-center mb-3 sm:mb-4">
+          {plan.description}
+        </p>
+        <div className="text-2xl sm:text-3xl font-bold text-purple-400 text-center mb-4 sm:mb-6">
+          <span className="text-xl sm:text-2xl">{plan.price}</span>
+          {!plan.enterprise && (
+            <span className="text-sm sm:text-lg text-gray-500">/month</span>
+          )}
+        </div>
+        <ul className="space-y-2 sm:space-y-4 mb-6 sm:mb-8 flex-grow">
+          {plan.features.map((feature, i) => (
+            <li
+              key={i}
+              className="flex items-start space-x-2 sm:space-x-3 text-xs sm:text-sm md:text-base text-gray-300"
+            >
+              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+        <button
+          onClick={() => navigate(plan.enterprise ? "/contact" : "/auth")}
+          className={`w-full py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center touch-manipulation mt-auto ${
+            plan.enterprise
+              ? "bg-black/30 text-white/80 hover:text-white border border-white/10 hover:border-purple-500/20"
+              : "bg-white/5 hover:bg-white/10 text-white/90 hover:text-white border border-white/10 hover:border-purple-500/20"
+          }`}
+        >
+          <span className="inline-flex whitespace-nowrap text-center text-sm sm:text-base">
+            {plan.enterprise ? "Contact Sales" : "Get Started"}
+          </span>
+        </button>
+      </div>
+    ))}
+  </div>
+</div>
+
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+            <div className="text-center mb-8 sm:mb-16">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                 Why Choose AstraPix
               </h2>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+              <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
                 Experience the future of AI-powered image generation
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
               {features.map((feature) => (
                 <div
                   key={feature.title}
-                  className="p-6 bg-black/40 backdrop-blur-md rounded-xl border border-white/20 hover:border-purple-500/50 transition-all group transform-gpu"
+                  className="p-4 sm:p-6 bg-black/40 backdrop-blur-md rounded-xl border border-white/20 hover:border-purple-500/50 transition-all group transform-gpu touch-manipulation"
                 >
-                  <div className="mb-4 relative transform-gpu group-hover:scale-110 transition-transform">
+                  <div className="mb-3 sm:mb-4 relative transform-gpu group-hover:scale-110 transition-transform">
                     <div className="relative z-10">
                       {feature.icon}
                     </div>
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] group-hover:text-purple-400 transition-colors">
+                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-1 sm:mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] group-hover:text-purple-400 transition-colors">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-400 mb-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                  <p className="text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
                     {feature.description}
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1 sm:gap-2">
                     {feature.details.map((detail, index) => (
                       <span
                         key={index}
-                        className="px-2 py-1 bg-purple-500/10 rounded-full text-xs text-purple-300 border border-purple-500/20"
+                        className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-purple-500/10 rounded-full text-xs text-purple-300 border border-purple-500/20"
                       >
                         {detail}
                       </span>
@@ -654,48 +673,49 @@ const LandingPage = () => {
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white text-center mb-16 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center mb-8 sm:mb-16 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
               What Our Users Say
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
               {testimonials.map((testimonial) => (
                 <div
                   key={testimonial.name}
-                  className="bg-black/40 backdrop-blur-md rounded-xl p-6 border border-white/20 transition-all group cursor-pointer cursor-none hover:scale-102 hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]"
+                  className="bg-black/40 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-white/20 transition-all group touch-manipulation hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]"
                 >
-                  <div className="flex items-center mb-4">
+                  <div className="flex items-center mb-3 sm:mb-4">
                     <div className="relative">
-                      <div className="w-12 h-12 rounded-full overflow-hidden">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden">
                         <img
                           src={testimonial.image}
                           alt={testimonial.name}
                           className="w-full h-full object-cover"
+                          loading="lazy"
                         />
                       </div>
                       {testimonial.verifiedUser && (
                         <div className="absolute -bottom-1 -right-1 bg-purple-500 rounded-full p-0.5">
-                          <Check className="w-3 h-3 text-white" />
+                          <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
                         </div>
                       )}
                     </div>
-                    <div className="ml-4">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-white font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                    <div className="ml-3 sm:ml-4">
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <h3 className="text-sm sm:text-base font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                           {testimonial.name}
                         </h3>
                       </div>
-                      <p className="text-purple-400 text-sm drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                      <p className="text-xs sm:text-sm text-purple-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
                         {testimonial.role}
                       </p>
-                      <p className="text-gray-500 text-xs">{testimonial.company}</p>
+                      <p className="text-xs text-gray-500">{testimonial.company}</p>
                     </div>
                   </div>
-                  <div className="flex gap-1 mb-3">
+                  <div className="flex gap-0.5 sm:gap-1 mb-2 sm:mb-3">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
-                  <p className="text-gray-300 italic drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] group-hover:text-white transition-colors">
+                  <p className="text-xs sm:text-sm text-gray-300 italic drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] group-hover:text-white transition-colors">
                     "{testimonial.content}"
                   </p>
                 </div>
@@ -704,7 +724,7 @@ const LandingPage = () => {
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 text-center">
               {[
                 { number: "1M+", label: "Images Generated" },
                 { number: "50K+", label: "Active Users" },
@@ -712,12 +732,12 @@ const LandingPage = () => {
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className="group hover:scale-110 transition-transform duration-300"
+                  className="group hover:scale-105 sm:hover:scale-110 transition-transform duration-300"
                 >
-                  <div className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 cursor-none">
+                  <div className="text-3xl sm:text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
                     {stat.number}
                   </div>
-                  <p className="text-gray-400 mt-2">{stat.label}</p>
+                  <p className="text-sm sm:text-base text-gray-400 mt-1 sm:mt-2">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -737,15 +757,15 @@ const LandingPage = () => {
                   ease: "linear"
                 }}
               />
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-6">
                 Ready to Start Creating?
               </h2>
-              <p className="text-gray-400 mb-8 max-w-2xl mx-auto">
+              <p className="text-sm sm:text-base text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto">
                 Join thousands of creators who are already using AstraPix to bring their ideas to life.
               </p>
               <button
                 onClick={() => navigate('/auth')}
-                className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium cursor-none"
+                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm sm:text-base touch-manipulation"
               >
                 Get Started For Free
               </button>
@@ -754,7 +774,7 @@ const LandingPage = () => {
         </div>
       </div>
 
-      <Footer className="cursor-none border-t border-white/10" />
+      <Footer className="border-t border-white/10" />
     </div>
   );
 };

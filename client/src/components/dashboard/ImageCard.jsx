@@ -13,30 +13,70 @@ const ImageCard = ({ image, onDelete }) => {
       });
       
       onDelete(image._id);
-      toast.success('Image deleted successfully');
+      toast.success('Image deleted successfully', {
+        position: window.innerWidth < 640 ? 'bottom-center' : 'top-right'
+      });
     } catch (error) {
-      toast.error('Failed to delete image');
+      toast.error('Failed to delete image', {
+        position: window.innerWidth < 640 ? 'bottom-center' : 'top-right'
+      });
     }
   };
 
   const handleShare = async () => {
     try {
-      await navigator.share({
-        title: 'Check out my AI generated image!',
-        text: image.prompt,
-        url: image.imageUrl
-      });
+      // Create a file object for sharing
+      const response = await fetch(image.imageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `astrapix-image-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Check out my AI generated image!',
+          text: image.prompt,
+          files: [file]
+        });
+        toast.success('Image shared successfully', {
+          position: window.innerWidth < 640 ? 'bottom-center' : 'top-right'
+        });
+      } else {
+        // Fallback for browsers without Web Share API
+        await navigator.clipboard.writeText(
+          `Check out this AI-generated image!\n\nPrompt: ${image.prompt}\n\nLink: ${image.imageUrl}`
+        );
+        toast.success('Link copied to clipboard (sharing not supported in this browser)', {
+          position: window.innerWidth < 640 ? 'bottom-center' : 'top-right'
+        });
+      }
     } catch (error) {
+      if (error.name === 'AbortError') return;
       console.error('Error sharing:', error);
+      toast.error('Failed to share image', {
+        position: window.innerWidth < 640 ? 'bottom-center' : 'top-right'
+      });
     }
   };
 
-  const imgAttributes = {
-    loading: "lazy",
-    decoding: "async",
-    width: "400",
-    height: "400",
-    className: "w-full h-full object-cover transition-transform duration-200"
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(image.imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `astrapix-${image.prompt.slice(0, 20).replace(/\s+/g, '-')}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Downloading image...', {
+        position: window.innerWidth < 640 ? 'bottom-center' : 'top-right'
+      });
+    } catch (error) {
+      toast.error('Failed to download image', {
+        position: window.innerWidth < 640 ? 'bottom-center' : 'top-right'
+      });
+    }
   };
 
   const thumbnailUrl = useMemo(() => 
@@ -50,39 +90,42 @@ const ImageCard = ({ image, onDelete }) => {
         alt={image.prompt}
         loading="lazy"
         className="w-full h-full object-cover transition-transform duration-200"
+        onLoad={() => setImageLoaded(true)}
       />
       
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 touch-none">
-        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
-          <p className="text-white text-xs sm:text-sm line-clamp-2 mb-2 sm:mb-3">{image.prompt}</p>
-          
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 touch:opacity-100">
+        <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
+          <p className="text-white text-xs sm:text-sm line-clamp-2 mb-1.5 sm:mb-2">{image.prompt}</p>
           <div className="flex justify-between items-center">
             <div className="flex space-x-1 sm:space-x-2">
               <button
-                onClick={() => window.open(image.imageUrl, '_blank')}
-                className="p-1.5 sm:p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors touch-manipulation"
+                onClick={handleDownload}
+                className="p-1 sm:p-1.5 bg-white/20 rounded-full hover:bg-white/30 transition-colors touch-manipulation"
                 title="Download"
+                aria-label="Download image"
               >
-                <Download className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
               </button>
               
               {navigator.share && (
                 <button
                   onClick={handleShare}
-                  className="p-1.5 sm:p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors touch-manipulation"
+                  className="p-1 sm:p-1.5 bg-white/20 rounded-full hover:bg-white/30 transition-colors touch-manipulation"
                   title="Share"
+                  aria-label="Share image"
                 >
-                  <Share className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                  <Share className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
                 </button>
               )}
             </div>
             
             <button
               onClick={handleDelete}
-              className="p-1.5 sm:p-2 bg-red-500/20 rounded-full hover:bg-red-500/30 transition-colors touch-manipulation"
+              className="p-1 sm:p-1.5 bg-red-500/20 rounded-full hover:bg-red-500/30 transition-colors touch-manipulation"
               title="Delete"
+              aria-label="Delete image"
             >
-              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
+              <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-400" />
             </button>
           </div>
         </div>

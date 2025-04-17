@@ -67,23 +67,44 @@ const PaymentModal = ({ isOpen, onClose, onSuccess }) => {
                         await new Promise(resolve => setTimeout(resolve, 1000)); // Show success briefly
                         onSuccess(verifyData.data.credits);
                         onClose();
-                        toast.success('Payment successful! Credits added to your account.');
+                        toast.success('Payment successful! Credits added to your account.', {
+                            position: window.innerWidth < 640 ? 'bottom-center' : 'top-right',
+                            duration: 4000
+                        });
                     } catch (error) {
                         setLoadingState('error');
-                        toast.error('Payment verification failed');
+                        toast.error('Payment verification failed', {
+                            position: window.innerWidth < 640 ? 'bottom-center' : 'top-right'
+                        });
                     } finally {
                         setVerifying(false);
                         setLoadingState('');
                     }
                 },
-                theme: { color: '#7C3AED' }
+                theme: { color: '#7C3AED' },
+                prefill: {
+                    name: 'AstraPix User',
+                    contact: '',
+                    email: ''
+                },
+                modal: {
+                    ondismiss: function() {
+                        setLoading(false);
+                        setSelectedPlan(null);
+                        setLoadingState('');
+                    },
+                    animation: true,
+                    backdropclose: false
+                }
             };
 
             const razorpay = new window.Razorpay(options);
             razorpay.open();
         } catch (error) {
             setLoadingState('error');
-            toast.error('Failed to initiate payment');
+            toast.error('Failed to initiate payment', {
+                position: window.innerWidth < 640 ? 'bottom-center' : 'top-right'
+            });
         } finally {
             setLoading(false);
             setSelectedPlan(null);
@@ -98,13 +119,13 @@ const PaymentModal = ({ isOpen, onClose, onSuccess }) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm overscroll-contain touch-none"
             >
                 {/* Loading/Verification Overlay */}
                 {(loadingState || verifying) && (
-                    <div className="fixed inset-0 z-[60] bg-black/90 flex flex-col items-center justify-center">
-                        <Loader className="w-8 h-8 text-purple-500 animate-spin mb-4" />
-                        <p className="text-white/80 text-lg font-medium">
+                    <div className="fixed inset-0 z-[60] bg-black/90 flex flex-col items-center justify-center p-4 sm:p-6">
+                        <Loader className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 animate-spin mb-2 sm:mb-4" />
+                        <p className="text-white/80 text-base sm:text-lg font-medium text-center">
                             {loadingState === 'initiating' && 'Initiating payment...'}
                             {loadingState === 'verifying' && 'Verifying payment...'}
                             {loadingState === 'success' && 'Payment successful!'}
@@ -112,12 +133,12 @@ const PaymentModal = ({ isOpen, onClose, onSuccess }) => {
                         </p>
                         {(loadingState === 'initiating' || loadingState === 'verifying') && (
                             <motion.div 
-                                className="h-1 bg-purple-500/20 w-48 mt-4 rounded-full overflow-hidden"
+                                className="h-1 bg-purple-500/20 w-36 sm:w-48 mt-3 sm:mt-4 rounded-full overflow-hidden"
                             >
                                 <motion.div
                                     className="h-full bg-purple-500"
                                     animate={{
-                                        x: [-192, 192],
+                                        x: [-144, 144],
                                     }}
                                     transition={{
                                         repeat: Infinity,
@@ -133,19 +154,19 @@ const PaymentModal = ({ isOpen, onClose, onSuccess }) => {
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-gray-900 border border-purple-500/20 rounded-xl p-6 max-w-6xl w-full mx-4 shadow-xl"
+                    className="bg-gray-900 border border-purple-500/20 rounded-xl p-4 sm:p-6 max-w-6xl w-full mx-2 sm:mx-4 shadow-xl max-h-[90vh] overflow-y-auto overscroll-contain"
                 >
-                    <div className="text-center mb-8">
-                        <div className="flex items-center justify-center gap-2 mb-4">
-                            <Sparkles className="w-6 h-6 text-purple-400" />
-                            <h2 className="text-2xl font-bold text-white">Purchase Credits</h2>
+                    <div className="text-center mb-4 sm:mb-8">
+                        <div className="flex items-center justify-center gap-2 mb-2 sm:mb-4">
+                            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
+                            <h2 className="text-xl sm:text-2xl font-bold text-white">Purchase Credits</h2>
                         </div>
-                        <p className="text-white/60 max-w-md mx-auto">
+                        <p className="text-white/60 text-sm sm:text-base max-w-md mx-auto">
                             Power up your creativity with AstraPix credits. Choose a plan that suits your needs.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-8">
                         {plans.map((plan) => (
                             <motion.button
                                 key={plan.credits}
@@ -153,40 +174,41 @@ const PaymentModal = ({ isOpen, onClose, onSuccess }) => {
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => handlePayment(plan)}
                                 disabled={loading || verifying}
-                                className={`w-full p-6 rounded-lg border-2 relative text-left h-full flex flex-col ${
+                                className={`w-full p-3 sm:p-6 rounded-lg border-2 relative text-left h-full flex flex-col touch-manipulation ${
                                     selectedPlan === plan
                                         ? 'border-purple-500 bg-purple-500/10'
                                         : 'border-white/10 hover:border-purple-500/50'
                                 } ${(loading || verifying) ? 'opacity-50 cursor-not-allowed' : ''} transition-all group`}
+                                aria-label={`Purchase ${plan.credits} credits for ₹${(plan.amount / 100).toLocaleString()}`}
                             >
                                 {plan.popular && (
-                                    <div className="absolute -top-3 -right-2 px-3 py-1 bg-purple-500 text-white text-xs rounded-full">
+                                    <div className="absolute -top-2 sm:-top-3 -right-1 sm:-right-2 px-2 sm:px-3 py-0.5 sm:py-1 bg-purple-500 text-white text-xs rounded-full">
                                         Popular Choice
                                     </div>
                                 )}
 
                                 <div className="flex flex-col flex-grow">
-                                    <div className="mb-4">
-                                        <div className="flex items-start justify-between mb-2">
+                                    <div className="mb-2 sm:mb-4">
+                                        <div className="flex items-start justify-between mb-1 sm:mb-2">
                                             <div>
-                                                <span className="text-2xl font-bold text-white">
+                                                <span className="text-xl sm:text-2xl font-bold text-white">
                                                     {plan.credits} Credits
                                                 </span>
-                                                <p className="text-purple-400 text-sm mt-1">{plan.perCredit}</p>
+                                                <p className="text-purple-400 text-xs sm:text-sm mt-0.5 sm:mt-1">{plan.perCredit}</p>
                                             </div>
-                                            <span className="text-3xl font-bold text-white">
+                                            <span className="text-2xl sm:text-3xl font-bold text-white">
                                                 ₹{(plan.amount / 100).toLocaleString()}
                                             </span>
                                         </div>
-                                        <p className="text-white/60 text-sm">
+                                        <p className="text-white/60 text-xs sm:text-sm">
                                             {plan.description}
                                         </p>
                                     </div>
 
-                                    <div className="space-y-3 flex-grow">
+                                    <div className="space-y-2 sm:space-y-3 flex-grow">
                                         {plan.features.map((feature, idx) => (
-                                            <div key={idx} className="flex items-center gap-2 text-sm text-white/80">
-                                                <Check className="w-4 h-4 text-purple-400 shrink-0" />
+                                            <div key={idx} className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-white/80">
+                                                <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400 shrink-0" />
                                                 <span>{feature}</span>
                                             </div>
                                         ))}
@@ -196,22 +218,23 @@ const PaymentModal = ({ isOpen, onClose, onSuccess }) => {
                         ))}
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-6">
-                        <div className="flex items-center gap-2 p-3 bg-purple-500/10 rounded-lg">
-                            <Shield className="w-5 h-5 text-purple-400" />
-                            <span className="text-sm text-white/80">Secure payment powered by Razorpay</span>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 border-t border-white/10 pt-4 sm:pt-6">
+                        <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-3 bg-purple-500/10 rounded-lg w-full sm:w-auto">
+                            <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+                            <span className="text-xs sm:text-sm text-white/80">Secure payment powered by Razorpay</span>
                         </div>
 
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 w-full sm:w-auto justify-between sm:justify-end">
                             <button
                                 onClick={onClose}
-                                className="px-4 py-2 text-white/60 hover:text-white transition-colors"
+                                className="px-3 sm:px-4 py-2 text-white/60 hover:text-white transition-colors touch-manipulation"
+                                aria-label="Close modal"
                             >
                                 Close
                             </button>
                             <a 
                                 href="mailto:support@astrapix.com"
-                                className="px-4 py-2 text-purple-400 hover:text-purple-300 transition-colors"
+                                className="px-3 sm:px-4 py-2 text-purple-400 hover:text-purple-300 transition-colors touch-manipulation"
                             >
                                 Need Help?
                             </a>

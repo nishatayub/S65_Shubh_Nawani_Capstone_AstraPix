@@ -31,10 +31,10 @@ const LoadingAnimation = () => {
         ))}
       </div>
 
-      <div className="relative flex items-center space-x-8">
+      <div className="relative flex items-center space-x-3 sm:space-x-8">
         {/* Outer rotating gradients */}
         <motion.div
-          className="absolute -inset-40 bg-gradient-to-r from-purple-600/10 via-pink-600/10 to-purple-600/10 blur-3xl"
+          className="absolute -inset-20 sm:-inset-40 bg-gradient-to-r from-purple-600/10 via-pink-600/10 to-purple-600/10 blur-3xl"
           animate={{
             rotate: [0, 360],
           }}
@@ -49,7 +49,7 @@ const LoadingAnimation = () => {
         {[...Array(3)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute -inset-24 rounded-full border border-purple-500/20"
+            className="absolute -inset-16 sm:-inset-24 rounded-full border border-purple-500/20"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{
               scale: [0.8, 1.2],
@@ -65,11 +65,11 @@ const LoadingAnimation = () => {
         ))}
 
         {/* Logo and Text Container */}
-        <div className="flex items-center space-x-8">
+        <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-8">
           {/* Logo animation */}
           <motion.div
             initial={{ scale: 0.2, opacity: 0 }}
-            animate={{ scale: 1.2, opacity: 1 }}
+            animate={{ scale: 1, opacity: 1 }}
             transition={{
               duration: 1,
               type: "spring",
@@ -79,7 +79,7 @@ const LoadingAnimation = () => {
             className="relative"
           >
             <div className="absolute inset-0 bg-purple-500/20 blur-3xl animate-pulse" />
-            <Logo className="w-[500px] h-[500px] drop-shadow-[0_0_25px_rgba(168,85,247,0.5)]" />
+            <Logo className="w-[180px] h-[180px] sm:w-[300px] sm:h-[300px] md:w-[500px] md:h-[500px] drop-shadow-[0_0_25px_rgba(168,85,247,0.5)]" />
           </motion.div>
 
           {/* Text animation */}
@@ -87,10 +87,10 @@ const LoadingAnimation = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.8 }}
-            className="space-y-2"
+            className="space-y-1 sm:space-y-2"
           >
             <motion.span 
-              className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 block drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 block drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]"
               animate={{
                 backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                 textShadow: [
@@ -112,7 +112,7 @@ const LoadingAnimation = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="text-base text-purple-400/80 tracking-wider"
+              className="text-xs sm:text-sm md:text-base text-purple-400/80 tracking-wider"
             >
               Generate. Create. Elevate.
             </motion.div>

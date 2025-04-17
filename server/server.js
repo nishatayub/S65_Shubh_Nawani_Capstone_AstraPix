@@ -1,10 +1,10 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const { authLimiter, imageLimiter, apiLimiter } = require('./middlewares/rateLimiter');
 const dotenv = require('dotenv');
 dotenv.config();
 const cors = require('cors');
 const passport = require('passport');
-const connectDB = require('./config/db');
 const paymentRoute = require('./routes/paymentRoute');
 const authRoute = require('./routes/authRoute');
 const emailVerificationRoute = require('./routes/emailVerificationRoute');
@@ -19,6 +19,35 @@ const chatBot = require('./routes/chat')
 require('./config/passport');
 
 const app = express();
+
+// Single MongoDB connection implementation
+let isConnected = false;
+const connectDB = async () => {
+  if (isConnected) return;
+  
+  try {
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 30000,
+      connectTimeoutMS: 10000,
+      maxPoolSize: 10
+    });
+    isConnected = true;
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    return conn;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    // Retry connection after 5 seconds
+    setTimeout(connectDB, 5000);
+    throw error;
+  }
+};
+
+// Handle MongoDB connection errors
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB error:', err);
+  isConnected = false;
+});
 
 // Initialize DB connection at startup
 let dbConnection = null;
@@ -95,10 +124,18 @@ app.use('/generate', imageRoute);
 app.use('/api', profileRoute);
 app.use('/api/payment', paymentRoute);
 
-// Add timeout middleware
+// Global timeout middleware
 app.use((req, res, next) => {
-  res.setTimeout(5000, () => {
-    res.status(504).send('Request Timeout');
+  // Set server timeout to 30 seconds
+  req.setTimeout(30000);
+  res.setTimeout(30000);
+  next();
+});
+
+// Add response timeout middleware
+app.use((req, res, next) => {
+  res.setTimeout(25000, () => {
+    res.status(504).send('Server Timeout');
   });
   next();
 });
@@ -118,13 +155,11 @@ app.get("/", (req, res) => {
   }
 })
 
-// Optimize database connection
-let isConnected = false;
+// Update the connectToDB function to use the existing connectDB
 const connectToDB = async () => {
   if (isConnected) return;
   try {
     await connectDB();
-    isConnected = true;
   } catch (err) {
     console.error('Database connection failed:', err);
     process.exit(1);
@@ -164,3 +199,21 @@ const startServer = async () => {
 };
 
 startServer();
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Server Error:', err);
+  res.status(500).json({ 
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  if (err.message.includes('timeout')) {
+    return res.redirect('/auth/auth-error');
+  }
+  next(err);
+});
