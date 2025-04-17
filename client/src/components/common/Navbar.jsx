@@ -12,12 +12,10 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [currentUsername, setCurrentUsername] = useState(() => {
-    // Use username from user object if it exists, otherwise use email prefix only for new users
     if (user?.username) return user.username;
     if (!localStorage.getItem('userData')) {
       return user?.email ? user.email.split('@')[0] : 'Guest';
     }
-    // If userData exists in localStorage, use that username
     const userData = JSON.parse(localStorage.getItem('userData'));
     return userData?.username || user?.email?.split('@')[0] || 'Guest';
   });
@@ -219,32 +217,32 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
 
   return (
     <nav className="sticky top-0 z-50 bg-gradient-to-r from-gray-900/90 to-gray-800/90 backdrop-blur-lg border-b border-white/10 shadow-lg">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6">
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo and Brand */}
-          <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer">
+          <Link to="/" className="flex items-center space-x-2 sm:space-x-3 cursor-pointer">
             <div className="p-1 bg-white/10 rounded-lg">
               <Logo className="w-6 h-6 sm:w-8 sm:h-8" />
             </div>
-            <span className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 cursor-pointer">
+            <span className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
               AstraPix
             </span>
-          </div>
+          </Link>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
-            <a href="/" className="text-white/80 hover:text-white flex items-center space-x-1 group cursor-pointer">
+          <div className="hidden md:flex items-center space-x-3 lg:space-x-6">
+            <Link to="/" className="text-white/80 hover:text-white flex items-center space-x-1 group cursor-pointer">
               <Home className="w-4 h-4" />
               <span>Home</span>
-            </a>
-            <a href="/gallery" className="text-white/80 hover:text-white flex items-center space-x-1 group cursor-pointer">
+            </Link>
+            <Link to="/gallery" className="text-white/80 hover:text-white flex items-center space-x-1 group cursor-pointer">
               <Image className="w-4 h-4" />
               <span>Gallery</span>
-            </a>
-            <a href="/generate" className="text-white/80 hover:text-white flex items-center space-x-1 group cursor-pointer">
+            </Link>
+            <Link to="/generate" className="text-white/80 hover:text-white flex items-center space-x-1 group cursor-pointer">
               <Palette className="w-4 h-4" />
               <span>Create</span>
-            </a>
+            </Link>
           </div>
 
           {/* Right Side Items */}
@@ -252,9 +250,9 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
             {/* Credits Button - Mobile Optimized */}
             <button
               onClick={openPaymentModal}
-              className="hidden sm:flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg text-white text-sm sm:text-base transition-all hover:scale-105"
+              className="hidden sm:flex items-center space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg text-white text-xs sm:text-base transition-all hover:scale-105 touch-manipulation"
             >
-              <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
+              <CreditCard className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               <span>Credits: {loading ? '...' : credits}</span>
             </button>
 
@@ -263,57 +261,56 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
               <div className="relative">
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className="flex items-center space-x-2 bg-white/5 hover:bg-white/10 px-3 py-2 rounded-lg transition-all duration-200"
+                  className="flex items-center space-x-2 bg-white/5 hover:bg-white/10 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-all duration-200 touch-manipulation"
+                  aria-expanded={showDropdown}
+                  aria-haspopup="true"
                 >
                   {user?.provider === 'google' && user?.avatar ? (
                     <img 
                       src={user.avatar}
                       alt={currentUsername}
-                      className="w-7 h-7 rounded-full ring-2 ring-white/20"
-                      onError={(e) => {
-                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUsername)}&background=random`;
-                      }}
+                      className="w-6 h-6 sm:w-7 sm:h-7 rounded-full ring-2 ring-white/20"
                     />
                   ) : (
                     <div 
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-medium ${avatarInfo.bgColor}`}
+                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium ${avatarInfo.bgColor}`}
                       title={currentUsername}
                     >
                       {avatarInfo.letter}
                     </div>
                   )}
-                  <span className="text-white/90 text-sm font-medium hidden sm:inline-block">
+                  <span className="text-white/90 text-xs sm:text-sm font-medium hidden sm:inline-block">
                     {currentUsername}
                   </span>
-                  <ChevronDown className="w-4 h-4 text-white/60" />
+                  <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-white/60" />
                 </button>
 
                 {/* Dropdown Menu */}
                 {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 sm:w-56 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl py-2 z-50 border border-white/10">
+                  <div className="absolute right-0 mt-2 w-44 sm:w-56 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl py-2 z-50 border border-white/10">
                     <button
                       onClick={handleEditUsername}
-                      className="w-full px-4 py-3 text-left text-white/90 hover:bg-white/10 flex items-center space-x-2"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left text-white/90 hover:bg-white/10 flex items-center space-x-2 touch-manipulation"
                     >
-                      <UserCog className="w-4 h-4" />
-                      <span>Edit Username</span>
+                      <UserCog className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span className="text-xs sm:text-sm">Edit Username</span>
                     </button>
                     <button
                       onClick={toggleTheme}
-                      className="w-full px-4 py-2 text-left text-white/90 hover:bg-white/10 flex items-center space-x-2"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left text-white/90 hover:bg-white/10 flex items-center space-x-2 touch-manipulation"
                     >
                       {darkMode ? 
-                        <><Sun className="w-4 h-4" /><span>Light Mode</span></> : 
-                        <><Moon className="w-4 h-4" /><span>Dark Mode</span></>
+                        <><Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="text-xs sm:text-sm">Light Mode</span></> : 
+                        <><Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="text-xs sm:text-sm">Dark Mode</span></>
                       }
                     </button>
                     <div className="h-px bg-white/10 my-1"></div>
                     <button
                       onClick={handleContactDev}
-                      className="w-full px-4 py-2 text-left text-white/90 hover:bg-white/10 flex items-center space-x-2"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left text-white/90 hover:bg-white/10 flex items-center space-x-2 touch-manipulation"
                     >
-                      <MessageSquareMore className="w-4 h-4" />
-                      <span>Contact Developer</span>
+                      <MessageSquareMore className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span className="text-xs sm:text-sm">Contact Developer</span>
                     </button>
                   </div>
                 )}
@@ -324,19 +321,20 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
                 <button
                   onClick={handleLogoutClick}
                   disabled={isLoggingOut}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-red-500/10 text-white/70 hover:text-red-400 transition-all duration-200 disabled:opacity-50"
+                  className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-red-500/10 text-white/70 hover:text-red-400 transition-all duration-200 disabled:opacity-50 touch-manipulation"
                   title="Sign out"
+                  aria-label="Sign out"
                 >
                   <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
 
                 {/* Enhanced Logout Confirmation */}
                 {showLogoutConfirm && (
-                  <div className="absolute right-0 top-full mt-2 w-56 p-3 bg-gradient-to-b from-gray-800/95 to-gray-900/95 backdrop-blur-xl rounded-lg border border-red-500/20 shadow-xl transform transition-all duration-300 ease-out">
-                    <p className="text-white/90 text-sm mb-3">
+                  <div className="absolute right-0 top-full mt-2 w-48 sm:w-56 p-3 bg-gradient-to-b from-gray-800/95 to-gray-900/95 backdrop-blur-xl rounded-lg border border-red-500/20 shadow-xl transform transition-all duration-300 ease-out">
+                    <p className="text-white/90 text-xs sm:text-sm mb-3">
                       {isLoggingOut ? (
                         <span className="flex items-center gap-2">
-                          <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"/>
+                          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-red-500 rounded-full animate-pulse"/>
                           Securely signing you out...
                         </span>
                       ) : (
@@ -350,7 +348,7 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
                             e.stopPropagation();
                             setShowLogoutConfirm(false);
                           }}
-                          className="px-3 py-1.5 text-xs text-white/70 hover:text-white transition-colors"
+                          className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs text-white/70 hover:text-white transition-colors touch-manipulation"
                         >
                           Cancel
                         </button>
@@ -358,17 +356,17 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
                       <button
                         onClick={confirmLogout}
                         disabled={isLoggingOut}
-                        className="px-3 py-1.5 text-xs bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-md flex items-center space-x-2 transition-all duration-200 disabled:opacity-50 min-w-[80px] justify-center"
+                        className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-md flex items-center space-x-1 sm:space-x-2 transition-all duration-200 disabled:opacity-50 min-w-[70px] sm:min-w-[80px] justify-center touch-manipulation"
                       >
                         {isLoggingOut ? (
                           <>
-                            <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"/>
-                            <span>Please wait...</span>
+                            <div className="w-2 h-2 sm:w-3 sm:h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"/>
+                            <span className="text-xs">Please wait...</span>
                           </>
                         ) : (
                           <>
-                            <LogOut className="w-3 h-3" />
-                            <span>Confirm</span>
+                            <LogOut className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                            <span className="text-xs">Confirm</span>
                           </>
                         )}
                       </button>
@@ -381,10 +379,11 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+              className="md:hidden p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors touch-manipulation"
               aria-label="Toggle menu"
+              aria-expanded={isMenuOpen}
             >
-              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isMenuOpen ? <X className="w-4 h-4 sm:w-5 sm:h-5" /> : <Menu className="w-4 h-4 sm:w-5 sm:h-5" />}
             </button>
           </div>
         </div>
@@ -392,40 +391,82 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-gray-900/95">
-          <div className="flex flex-col h-full pt-16 pb-6 px-4">
-            <div className="flex-1 overflow-y-auto space-y-2">
-              {/* Mobile Navigation Items */}
-              <a href="/" className="block py-3 px-4 text-white/90 hover:bg-white/5 rounded-lg flex items-center space-x-3">
+        <div className="md:hidden bg-gray-900 border-b border-white/10">
+          <div className="px-4 py-3">
+            {/* Mobile Navigation Items */}
+            <div className="space-y-1">
+              <Link 
+                to="/"
+                onClick={() => setIsMenuOpen(false)}
+                className="block py-2.5 px-3 text-white/90 hover:bg-white/5 rounded-lg flex items-center space-x-3"
+              >
                 <Home className="w-5 h-5" />
                 <span>Home</span>
-              </a>
-              <a href="/gallery" className="block py-3 px-4 text-white/90 hover:bg-white/5 rounded-lg flex items-center space-x-3">
+              </Link>
+              <Link 
+                to="/gallery"
+                onClick={() => setIsMenuOpen(false)}
+                className="block py-2.5 px-3 text-white/90 hover:bg-white/5 rounded-lg flex items-center space-x-3"
+              >
                 <Image className="w-5 h-5" />
                 <span>Gallery</span>
-              </a>
-              <a href="/generate" className="block py-3 px-4 text-white/90 hover:bg-white/5 rounded-lg flex items-center space-x-3">
+              </Link>
+              <Link 
+                to="/generate"
+                onClick={() => setIsMenuOpen(false)}
+                className="block py-2.5 px-3 text-white/90 hover:bg-white/5 rounded-lg flex items-center space-x-3"
+              >
                 <Palette className="w-5 h-5" />
                 <span>Create</span>
-              </a>
+              </Link>
             </div>
 
-            {/* Mobile Bottom Actions */}
-            <div className="pt-4 border-t border-white/10 space-y-2">
+            <div className="h-px bg-white/10 my-3" />
+
+            {/* Mobile Actions */}
+            <div className="space-y-1">
               <button
-                onClick={openPaymentModal}
-                className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg text-white flex items-center justify-center space-x-2"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  toggleTheme();
+                }}
+                className="w-full py-2.5 px-3 text-white/90 hover:bg-white/5 rounded-lg flex items-center space-x-3"
+              >
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleContactDev();
+                }}
+                className="w-full py-2.5 px-3 text-white/90 hover:bg-white/5 rounded-lg flex items-center space-x-3"
+              >
+                <MessageSquareMore className="w-5 h-5" />
+                <span>Contact Developer</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  openPaymentModal();
+                }}
+                className="w-full mt-3 py-2.5 px-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30 text-white rounded-lg flex items-center justify-center space-x-2"
               >
                 <CreditCard className="w-5 h-5" />
                 <span>Credits: {loading ? '...' : credits}</span>
               </button>
+
               <button
-                onClick={handleLogoutClick}
-                disabled={isLoggingOut}
-                className="w-full py-3 px-4 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 rounded-lg flex items-center justify-center space-x-2"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleLogoutClick();
+                }}
+                className="w-full mt-2 py-2.5 px-4 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg flex items-center justify-center space-x-2"
               >
                 <LogOut className="w-5 h-5" />
-                <span>Logout</span>
+                <span>Sign Out</span>
               </button>
             </div>
           </div>

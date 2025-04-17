@@ -142,7 +142,7 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden overscroll-none">
       {/* Back to Landing button with improved visibility */}
       <button
         onClick={() => navigate('/')}
@@ -152,9 +152,9 @@ const AuthPage = () => {
         <span>Return to Landing</span>
       </button>
 
-      {/* Background with optimized loading */}
+      {/* Background Image */}
       <div 
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat" 
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${BackgroundImage})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-indigo-600/50" />
@@ -163,20 +163,22 @@ const AuthPage = () => {
       {/* Theme Toggle - Better touch target */}
       <button
         onClick={toggleTheme}
-        className="fixed top-4 right-4 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors touch-manipulation"
+        className="fixed top-4 right-4 z-50 p-2 sm:p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors touch-manipulation"
+        aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
       >
         {darkMode ? 
-          <Sun className="w-5 h-5 text-white" /> : 
-          <Moon className="w-5 h-5 text-white" />
+          <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-white" /> : 
+          <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         }
       </button>
 
       {/* Main Container */}
-      <div className="relative min-h-screen flex items-center justify-center p-4">
+      <div className="relative min-h-screen flex items-center justify-center p-3 sm:p-4">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md sm:max-w-xl md:max-w-6xl grid grid-cols-1 md:grid-cols-2 bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl"
+          transition={{ duration: 0.3 }}
+          className="w-full max-w-sm sm:max-w-xl md:max-w-6xl grid grid-cols-1 md:grid-cols-2 bg-white/10 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl"
         >
           <AnimatePresence mode="wait" initial={false}>
             {!showForgotPassword ? (
@@ -190,21 +192,21 @@ const AuthPage = () => {
                       animate={{ x: 0, opacity: 1 }}
                       exit={{ x: 50, opacity: 0 }}
                       transition={pageTransition}
-                      className="p-6 md:p-12 bg-gradient-to-br from-purple-600/20 to-indigo-600/20"
+                      className="p-4 sm:p-6 md:p-12 bg-gradient-to-br from-purple-600/20 to-indigo-600/20"
                     >
-                      <Logo className="h-10 w-10 md:h-12 md:w-12 mb-6 md:mb-8" />
-                      <div className="space-y-4 md:space-y-6">
-                        <h1 className="text-2xl md:text-4xl font-bold text-white">
+                      <Logo className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mb-4 sm:mb-6 md:mb-8" />
+                      <div className="space-y-3 sm:space-y-4 md:space-y-6">
+                        <h1 className="text-xl sm:text-2xl md:text-4xl font-bold text-white">
                           Welcome Back!
                         </h1>
-                        <p className="text-white/80 text-sm md:text-lg max-w-sm">
+                        <p className="text-white/80 text-xs sm:text-sm md:text-lg max-w-sm">
                           Sign in to continue your creative journey with AstraPix.
                         </p>
                         <motion.button
                           onClick={handleToggle}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          className="px-6 py-2 md:px-8 md:py-3 border-2 border-white/50 text-white rounded-lg hover:bg-white/10 transition-all"
+                          className="px-4 sm:px-6 py-1.5 sm:py-2 md:px-8 md:py-3 border-2 border-white/50 text-white rounded-lg hover:bg-white/10 transition-all touch-manipulation"
                         >
                           Create Account
                         </motion.button>
@@ -222,7 +224,7 @@ const AuthPage = () => {
                       isSubmitting={isSubmitting}
                       error={error}
                       handleGoogleLogin={handleGoogleLogin}
-                      onForgotPassword={handleForgotPassword}  // Add this prop
+                      onForgotPassword={() => setShowForgotPassword(true)}
                     />
                   </>
                 ) : (

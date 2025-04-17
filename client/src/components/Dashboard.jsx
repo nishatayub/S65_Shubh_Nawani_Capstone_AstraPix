@@ -223,10 +223,27 @@ const Dashboard = () => {
             await fetchGalleryImages();
             // Force gallery re-render by updating key
             setGalleryKey(prev => prev + 1);
-            toast.success('Image generated successfully!');
+            toast.success('Image generated successfully!', {
+              duration: 3000,
+              position: window.innerWidth < 640 ? 'bottom-center' : 'top-right',
+              style: {
+                background: '#1F2937',
+                color: '#fff',
+                maxWidth: '90vw',
+                wordBreak: 'break-word'
+              }
+            });
         }
     } catch (err) {
-        toast.error('Failed to generate image');
+        toast.error('Failed to generate image', {
+          duration: 3000,
+          position: window.innerWidth < 640 ? 'bottom-center' : 'top-right',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+            maxWidth: '90vw'
+          }
+        });
         setGenerationError('Failed to generate image. Please try again.');
     } finally {
         setGenerating(false);
@@ -234,7 +251,11 @@ const Dashboard = () => {
 }, [prompt, credits, generating, user?._id, authHeaders, fetchGalleryImages]);
 
   const scrollToGeneration = () => {
-    imageGenerationRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (imageGenerationRef.current) {
+      const yOffset = -80; // Account for header
+      const y = imageGenerationRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
   };
 
   // Memoized components

@@ -33,10 +33,10 @@ const ImageGenerationForm = ({ prompt, setPrompt, credits, generating, generated
       animate={{ opacity: 1, y: 0 }}
       className="mb-4 sm:mb-8 w-full"
     >
-      <h3 className="text-xl sm:text-2xl font-semibold text-white mb-4">
+      <h3 className="text-xl sm:text-2xl font-semibold text-white mb-3 sm:mb-4">
         Generate Image
       </h3>
-      <form onSubmit={handleGenerateImage} className="space-y-4">
+      <form onSubmit={handleGenerateImage} className="space-y-3 sm:space-y-4">
         <div className="flex flex-col sm:flex-row gap-2">
           <textarea
             value={prompt}
@@ -46,41 +46,42 @@ const ImageGenerationForm = ({ prompt, setPrompt, credits, generating, generated
             className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/5 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base resize-none"
             rows="3"
             disabled={generating}
+            aria-label="Image description prompt"
           />
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={handleSurpriseMe}
             type="button"
-            className="flex-shrink-0 px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg text-white/90 hover:text-white flex items-center gap-2 text-sm sm:text-base"
+            onClick={handleSurpriseMe}
+            disabled={generating}
+            className="px-3 sm:px-4 py-2 sm:py-3 bg-white/5 hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors text-sm sm:text-base whitespace-nowrap touch-manipulation"
           >
-            <Sparkles className="w-4 h-4" />
             Surprise Me
           </motion.button>
-
+          
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            disabled={generating || !prompt.trim() || credits <= 0}
             type="submit"
-            className={`w-full sm:flex-grow py-2 rounded-lg text-white font-medium flex items-center justify-center gap-2 text-sm sm:text-base
-              ${generating || !prompt.trim() || credits <= 0
-                ? 'bg-gray-600 cursor-not-allowed'
+            disabled={!prompt.trim() || credits <= 0 || generating}
+            className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-white flex items-center justify-center gap-1 sm:gap-2 transition-colors text-sm sm:text-base touch-manipulation ${
+              !prompt.trim() || credits <= 0 
+                ? 'bg-gray-600 cursor-not-allowed opacity-70' 
                 : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700'
-              }`}
+            }`}
           >
             {generating ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Generating...
+                <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                <span>Generating...</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4" />
-                Generate Image ({credits} credit{credits !== 1 ? 's' : ''})
+                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Generate Image ({credits} credit{credits !== 1 ? 's' : ''})</span>
               </>
             )}
           </motion.button>
@@ -91,7 +92,7 @@ const ImageGenerationForm = ({ prompt, setPrompt, credits, generating, generated
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mt-4 p-4 bg-red-500/10 backdrop-blur-md text-red-200 rounded-lg border border-red-500/20"
+          className="mt-3 sm:mt-4 p-3 sm:p-4 bg-red-500/10 backdrop-blur-md text-red-200 rounded-lg border border-red-500/20 text-sm"
         >
           {generationError}
         </motion.div>
@@ -101,19 +102,20 @@ const ImageGenerationForm = ({ prompt, setPrompt, credits, generating, generated
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-6"
+          className="mt-4 sm:mt-6"
         >
-          <h4 className="text-xl font-semibold text-white mb-4">
+          <h4 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">
             Generated Image
           </h4>
-          <div className="relative aspect-square max-w-2xl mx-auto">
+          <div className="relative aspect-square max-w-sm sm:max-w-2xl mx-auto">
             <img
               src={generatedImage}
               alt="Generated artwork"
               className="rounded-lg shadow-xl w-full h-full object-cover"
+              loading="eager"
             />
           </div>
-          <p className="mt-4 text-sm text-white/80 text-center">
+          <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-white/80 text-center">
             Prompt: "{prompt}"
           </p>
         </motion.div>

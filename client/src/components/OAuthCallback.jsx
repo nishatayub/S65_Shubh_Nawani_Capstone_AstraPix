@@ -36,14 +36,20 @@ const OAuthCallback = () => {
   }, [location, login, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-purple-900/50 p-4">
+      <div className="text-center bg-black/30 backdrop-blur-sm rounded-xl p-6 border border-white/10 max-w-sm w-full">
         {error ? (
-          <div className="text-red-500 mb-4">{error}</div>
+          <div className="space-y-3">
+            <div className="text-red-400 text-sm sm:text-base">{error}</div>
+            <p className="text-white/60 text-xs sm:text-sm">
+              Redirecting to login page...
+            </p>
+          </div>
         ) : (
           <>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Completing authentication...</p>
+            <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-2 border-white/20 border-t-purple-500 mx-auto"></div>
+            <p className="mt-4 text-white/80 text-sm sm:text-base">Completing authentication...</p>
+            <p className="mt-2 text-white/50 text-xs sm:text-sm">Please wait, you'll be redirected shortly</p>
           </>
         )}
       </div>

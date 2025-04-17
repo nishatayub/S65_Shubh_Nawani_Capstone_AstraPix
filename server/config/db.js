@@ -2,28 +2,22 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    if (mongoose.connection.readyState === 1) {
-      return mongoose.connection;
-    }
-
     const conn = await mongoose.connect(process.env.MONGO_URI, {
       serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 5000,
-      socketTimeoutMS: 5000,
-      maxPoolSize: 10,
-      minPoolSize: 5,
-      maxIdleTimeMS: 10000
+      socketTimeoutMS: 30000,
+      connectTimeoutMS: 10000,
+      maxPoolSize: 10
     });
-
-    mongoose.connection.on('error', (err) => {
-      console.error('MongoDB error:', err);
-    });
-
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
     return conn;
-  } catch (err) {
-    console.error('MongoDB connection error:', err);
-    throw err;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw error;
   }
 };
+
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB error:', err);
+});
 
 module.exports = connectDB;

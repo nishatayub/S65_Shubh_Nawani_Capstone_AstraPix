@@ -263,7 +263,7 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-2 sm:p-4"
       onClick={() => setFullscreenImage(null)}
     >
       <motion.div 
@@ -276,9 +276,9 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
         <motion.button
           whileHover={{ scale: 1.1 }}
           onClick={() => setFullscreenImage(null)}
-          className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white z-50"
+          className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white z-50 touch-manipulation"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4 sm:w-5 sm:h-5" />
         </motion.button>
 
         <div className="relative w-full h-full flex items-center justify-center p-4">
@@ -501,19 +501,22 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
                       />
                     </div>
                     
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
-                        <div className="flex items-center gap-2 mb-2">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 md:duration-200 md:transition-opacity touch:opacity-100">
+                      <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:p-4">
+                        <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
                           <button
-                            onClick={() => toggleFavorite(image._id)}
-                            className={`p-2 rounded-full ${
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(image._id);
+                            }}
+                            className={`p-1.5 sm:p-2 rounded-full touch-manipulation ${
                               favorites.includes(image._id) 
                                 ? 'bg-purple-500/30' 
                                 : 'bg-white/20'
                             }`}
                           >
                             <Heart 
-                              className={`w-4 h-4 ${
+                              className={`w-3 h-3 sm:w-4 sm:h-4 ${
                                 favorites.includes(image._id) 
                                   ? 'text-purple-400 fill-purple-400' 
                                   : 'text-white'

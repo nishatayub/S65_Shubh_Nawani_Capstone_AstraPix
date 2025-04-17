@@ -9,7 +9,7 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
   try {
-    const user = await User.findById(id);
+    const user = await User.findById(id).lean().maxTimeMS(5000);
     done(null, user);
   } catch (error) {
     done(error, null);
@@ -23,6 +23,7 @@ const config = {
     ? `${process.env.SERVER_URL}/auth/google/callback`
     : process.env.GOOGLE_CALLBACK_URL,
   scope: ["profile", "email"],
+  timeout: 25000  // Set timeout to 25 seconds
 };
 
 passport.use(new GoogleStrategy(config, async (accessToken, refreshToken, profile, done) => {
