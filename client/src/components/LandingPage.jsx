@@ -24,7 +24,7 @@ const LandingPage = () => {
       setIsMobile(window.innerWidth <= 768);
     };
     checkMobile();
-    window.addEventListener('resize', checkMobile);
+    window.addEventListener('resize', checkMobile, { passive: true });
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
@@ -64,7 +64,7 @@ const LandingPage = () => {
           console.error("Video autoplay failed:", error);
           document.addEventListener('click', () => {
             videoRef.current?.play();
-          }, { once: true });
+          }, { once: true, passive: true });
         }
       }
     };
@@ -77,7 +77,7 @@ const LandingPage = () => {
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange, { passive: true });
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [isMobile]);
 
@@ -345,7 +345,8 @@ const LandingPage = () => {
             transform: 'translate3d(0, 0, 0)',
             backfaceVisibility: 'hidden',
             perspective: 1000,
-            WebkitFontSmoothing: 'antialiased'
+            WebkitFontSmoothing: 'antialiased',
+            willChange: 'transform'
           }}
         >
           <div className="absolute -inset-0.5 rounded-full bg-purple-500/30 animate-pulse blur-sm" />
@@ -477,14 +478,14 @@ const LandingPage = () => {
                 >
                   <button
                     onClick={() => navigate('/auth')}
-                    className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 group transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-purple-500/25 touch-manipulation"
+                    className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 group transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-purple-500/25 touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black"
                   >
                     <span className="text-base sm:text-lg">Start Creating</span>
                     <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button
                     onClick={() => navigate('/gallery')}
-                    className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transform hover:scale-105 transition-all duration-300 border border-white/20 hover:border-purple-500/50 touch-manipulation"
+                    className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transform hover:scale-105 transition-all duration-300 border border-white/20 hover:border-purple-500/50 touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-black"
                   >
                     <span className="text-base sm:text-lg">View Gallery</span>
                   </button>
@@ -541,6 +542,9 @@ const LandingPage = () => {
                             alt={demo.caption}
                             className="w-full h-32 sm:h-48 object-cover object-center transform group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
+                            width="800"
+                            height="600"
+                            fetchpriority="low"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0" />
                           <span className="absolute bottom-2 left-2 text-xs sm:text-sm text-white/90 font-medium">
@@ -556,80 +560,79 @@ const LandingPage = () => {
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-  <div className="text-center mb-8 sm:mb-16">
-    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-      Choose Your Plan
-    </h2>
-    <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-      Select the perfect plan for your creative needs
-    </p>
-  </div>
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-    {pricingPlans.map((plan) => (
-      <div
-        key={plan.name}
-        className={`bg-black/40 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border ${
-          plan.popular
-            ? "border-purple-500"
-            : plan.badge === "Best Value"
-            ? "border-pink-500"
-            : "border-white/10"
-        } relative hover:bg-black/50 transition-all touch-manipulation flex flex-col`}
-      >
-        {plan.badge && (
-          <div
-            className={`absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 ${
-              plan.badge === "Most Popular"
-                ? "bg-purple-500"
-                : "bg-pink-500"
-            } text-white px-3 sm:px-4 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium`}
-          >
-            {plan.badge}
+            <div className="text-center mb-8 sm:mb-16">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                Choose Your Plan
+              </h2>
+              <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                Select the perfect plan for your creative needs
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+              {pricingPlans.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`bg-black/40 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border ${
+                    plan.popular
+                      ? "border-purple-500"
+                      : plan.badge === "Best Value"
+                      ? "border-pink-500"
+                      : "border-white/10"
+                  } relative hover:bg-black/50 transition-all touch-manipulation flex flex-col`}
+                >
+                  {plan.badge && (
+                    <div
+                      className={`absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 ${
+                        plan.badge === "Most Popular"
+                          ? "bg-purple-500"
+                          : "bg-pink-500"
+                      } text-white px-3 sm:px-4 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium`}
+                    >
+                      {plan.badge}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-center mb-3 sm:mb-4">
+                    {plan.icon}
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-white text-center mb-1 sm:mb-2">
+                    {plan.name}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-400 text-center mb-3 sm:mb-4">
+                    {plan.description}
+                  </p>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-400 text-center mb-4 sm:mb-6">
+                    <span className="text-xl sm:text-2xl">{plan.price}</span>
+                    {!plan.enterprise && (
+                      <span className="text-sm sm:text-lg text-gray-500">/month</span>
+                    )}
+                  </div>
+                  <ul className="space-y-2 sm:space-y-4 mb-6 sm:mb-8 flex-grow">
+                    {plan.features.map((feature, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start space-x-2 sm:space-x-3 text-xs sm:text-sm md:text-base text-gray-300"
+                      >
+                        <Check className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => navigate(plan.enterprise ? "/contact" : "/auth")}
+                    className={`w-full py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center touch-manipulation mt-auto focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1 focus:ring-offset-black ${
+                      plan.enterprise
+                        ? "bg-black/30 text-white/80 hover:text-white border border-white/10 hover:border-purple-500/20"
+                        : "bg-white/5 hover:bg-white/10 text-white/90 hover:text-white border border-white/10 hover:border-purple-500/20"
+                    }`}
+                  >
+                    <span className="inline-flex whitespace-nowrap text-center text-sm sm:text-base">
+                      {plan.enterprise ? "Contact Sales" : "Get Started"}
+                    </span>
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
-        <div className="flex items-center justify-center mb-3 sm:mb-4">
-          {plan.icon}
-        </div>
-        <h3 className="text-xl sm:text-2xl font-bold text-white text-center mb-1 sm:mb-2">
-          {plan.name}
-        </h3>
-        <p className="text-xs sm:text-sm text-gray-400 text-center mb-3 sm:mb-4">
-          {plan.description}
-        </p>
-        <div className="text-2xl sm:text-3xl font-bold text-purple-400 text-center mb-4 sm:mb-6">
-          <span className="text-xl sm:text-2xl">{plan.price}</span>
-          {!plan.enterprise && (
-            <span className="text-sm sm:text-lg text-gray-500">/month</span>
-          )}
-        </div>
-        <ul className="space-y-2 sm:space-y-4 mb-6 sm:mb-8 flex-grow">
-          {plan.features.map((feature, i) => (
-            <li
-              key={i}
-              className="flex items-start space-x-2 sm:space-x-3 text-xs sm:text-sm md:text-base text-gray-300"
-            >
-              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-        <button
-          onClick={() => navigate(plan.enterprise ? "/contact" : "/auth")}
-          className={`w-full py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center touch-manipulation mt-auto ${
-            plan.enterprise
-              ? "bg-black/30 text-white/80 hover:text-white border border-white/10 hover:border-purple-500/20"
-              : "bg-white/5 hover:bg-white/10 text-white/90 hover:text-white border border-white/10 hover:border-purple-500/20"
-          }`}
-        >
-          <span className="inline-flex whitespace-nowrap text-center text-sm sm:text-base">
-            {plan.enterprise ? "Contact Sales" : "Get Started"}
-          </span>
-        </button>
-      </div>
-    ))}
-  </div>
-</div>
-
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8 sm:mb-16">
@@ -690,6 +693,9 @@ const LandingPage = () => {
                           alt={testimonial.name}
                           className="w-full h-full object-cover"
                           loading="lazy"
+                          width="150"
+                          height="150"
+                          fetchpriority="low"
                         />
                       </div>
                       {testimonial.verifiedUser && (
@@ -765,7 +771,7 @@ const LandingPage = () => {
               </p>
               <button
                 onClick={() => navigate('/auth')}
-                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm sm:text-base touch-manipulation"
+                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm sm:text-base touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black"
               >
                 Get Started For Free
               </button>

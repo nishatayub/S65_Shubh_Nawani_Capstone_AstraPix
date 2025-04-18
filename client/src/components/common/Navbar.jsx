@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Sun, Moon, CreditCard, ChevronDown, LogOut, UserCog, Home, Image, Palette, MessageSquareMore, QrCode, X, Menu } from 'lucide-react';
 import Swal from 'sweetalert2';
 import Logo from './Logo';
 import { getInitialAvatar } from '../../utils/avatarUtils';
-import qrCode from '../../assets/AstraPix_QR.svg'; // Add this import
-import toast from 'react-hot-toast'; // Add this import
-import axios from 'axios';  // Add this import at the top
+import qrCode from '../../assets/AstraPix_QR.svg';
+import toast from 'react-hot-toast';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 
 const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, openPaymentModal }) => {
@@ -22,18 +22,45 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
   const [avatarInfo, setAvatarInfo] = useState(() => getInitialAvatar(currentUsername));
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  
+  // Refs to track mounted state and manage event listeners
+  const dropdownRef = useRef(null);
 
   // Update avatar when username changes
   useEffect(() => {
     setAvatarInfo(getInitialAvatar(currentUsername));
   }, [currentUsername]);
 
-  const handleLogoutClick = (e) => {
+  // Handle clicks outside dropdown
+  useEffect(() => {
+    if (!showDropdown) return;
+    
+    const handleOutsideClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showDropdown]);
+
+  // Cleanup for logout confirmation
+  useEffect(() => {
+    return () => {
+      if (showLogoutConfirm) {
+        setShowLogoutConfirm(false);
+        setIsLoggingOut(false);
+      }
+    };
+  }, [showLogoutConfirm]);
+
+  const handleLogoutClick = useCallback((e) => {
     e.stopPropagation(); // Prevent dropdown from closing
     setShowLogoutConfirm(true);
-  };
+  }, []);
 
-  const confirmLogout = async () => {
+  const confirmLogout = useCallback(async () => {
     setIsLoggingOut(true);
     
     try {
@@ -55,7 +82,7 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
       setShowLogoutConfirm(false);
       toast.error('Failed to sign out. Please try again.');
     }
-  };
+  }, [handleLogout]);
 
   const updateUsername = async (newUsername) => {
     try {
@@ -100,7 +127,7 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
     }
   };
 
-  const handleEditUsername = () => {
+  const handleEditUsername = useCallback(() => {
     Swal.fire({
       title: 'Edit Username',
       input: 'text',
@@ -129,9 +156,9 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
         await updateUsername(result.value);
       }
     });
-  };
+  }, [currentUsername]);
 
-  const handleContactDev = () => {
+  const handleContactDev = useCallback(() => {
     Swal.fire({
       title: 'Connect with Developer',
       html: `
@@ -213,7 +240,7 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
         document.querySelector('.swal2-popup').style.margin = 'auto';
       }
     });
-  };
+  }, []);
 
   return (
     <nav className="sticky top-0 z-50 bg-gradient-to-r from-gray-900/90 to-gray-800/90 backdrop-blur-lg border-b border-white/10 shadow-lg">
@@ -258,12 +285,15 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
 
             {/* User Profile Dropdown */}
             <div className="flex items-center space-x-2">
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
                   className="flex items-center space-x-2 bg-white/5 hover:bg-white/10 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-all duration-200 touch-manipulation"
                   aria-expanded={showDropdown}
                   aria-haspopup="true"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setShowDropdown(false);
+                  }}
                 >
                   {user?.provider === 'google' && user?.avatar ? (
                     <img 
@@ -287,10 +317,16 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
 
                 {/* Dropdown Menu */}
                 {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-44 sm:w-56 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl py-2 z-50 border border-white/10">
+                  <div 
+                    className="absolute right-0 mt-2 w-44 sm:w-56 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl py-2 z-50 border border-white/10"
+                    role="menu"
+                    aria-orientation="vertical"
+                    aria-labelledby="user-menu"
+                  >
                     <button
                       onClick={handleEditUsername}
                       className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left text-white/90 hover:bg-white/10 flex items-center space-x-2 touch-manipulation"
+                      role="menuitem"
                     >
                       <UserCog className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       <span className="text-xs sm:text-sm">Edit Username</span>
@@ -298,6 +334,7 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
                     <button
                       onClick={toggleTheme}
                       className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left text-white/90 hover:bg-white/10 flex items-center space-x-2 touch-manipulation"
+                      role="menuitem"
                     >
                       {darkMode ? 
                         <><Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="text-xs sm:text-sm">Light Mode</span></> : 
@@ -308,6 +345,7 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
                     <button
                       onClick={handleContactDev}
                       className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left text-white/90 hover:bg-white/10 flex items-center space-x-2 touch-manipulation"
+                      role="menuitem"
                     >
                       <MessageSquareMore className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       <span className="text-xs sm:text-sm">Contact Developer</span>
@@ -476,4 +514,4 @@ const Navbar = ({ darkMode, toggleTheme, credits, loading, user, handleLogout, o
   );
 };
 
-export default Navbar;
+export default React.memo(Navbar);

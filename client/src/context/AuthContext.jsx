@@ -15,6 +15,23 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
+  
+  // Set up axios interceptor for 401 responses
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      response => response,
+      error => {
+        if (error.response && error.response.status === 401) {
+          // Auto logout on 401 Unauthorized
+          logout();
+        }
+        return Promise.reject(error);
+      }
+    );
+    
+    return () => axios.interceptors.response.eject(interceptor);
+  }, []);
 
   const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -24,6 +41,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
+      setAuthError(null);
       const response = await axios.get(`${import.meta.env.VITE_BASE_URI}/api/profile`, {
         headers: { Authorization: `Bearer ${token}` },
         timeout: 5000
@@ -32,6 +50,8 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } catch (error) {
+      console.error('Authentication check failed:', error?.response?.data || error.message);
+      setAuthError(error?.response?.data?.message || 'Authentication failed');
       localStorage.removeItem('token');
       delete axios.defaults.headers.common['Authorization'];
     } finally {
@@ -39,13 +59,31 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Apply the auth check effect with a cleanup
   useEffect(() => {
-    checkAuth();
+    let isMounted = true;
+    
+    const performAuthCheck = async () => {
+      try {
+        await checkAuth();
+      } catch (error) {
+        if (isMounted) {
+          console.error('Error during auth check:', error);
+        }
+      }
+    };
+    
+    performAuthCheck();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [checkAuth]);
 
   const login = async (token, userData = null) => {
     try {
       localStorage.setItem('token', token);
+      setAuthError(null);
       
       if (!userData) {
         const response = await axios.get(`${import.meta.env.VITE_BASE_URI}/api/profile`, {
@@ -60,27 +98,50 @@ export const AuthProvider = ({ children }) => {
       
       return userData;
     } catch (error) {
+      const errorMessage = error?.response?.data?.message || 'Login failed';
+      setAuthError(errorMessage);
       localStorage.removeItem('token');
       delete axios.defaults.headers.common['Authorization'];
-      throw error;
+      throw new Error(errorMessage);
     }
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('token');
     setUser(null);
     setIsAuthenticated(false);
+    setAuthError(null);
     delete axios.defaults.headers.common['Authorization'];
-  };
+  }, []);
 
   const verifyToken = async () => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) return false;
+      
       const response = await axios.get(`${import.meta.env.VITE_BASE_URI}/api/verify-token`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // ...existing code...
+      return response.data.valid === true;
     } catch (error) {
-      // ...existing code...
+      return false;
+    }
+  };
+
+  const updateUserProfile = async (profileData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `${import.meta.env.VITE_BASE_URI}/api/profile`,
+        profileData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setUser(response.data);
+      return response.data;
+    } catch (error) {
+      const errorMessage = error?.response?.data?.message || 'Profile update failed';
+      throw new Error(errorMessage);
     }
   };
 
@@ -88,24 +149,15 @@ export const AuthProvider = ({ children }) => {
     user,
     isAuthenticated,
     loading,
+    authError,
     login,
     logout,
+    verifyToken,
+    updateUserProfile,
     handleOAuthLogin: login // Simplified OAuth login handling
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 sm:h-16 sm:w-16"></div>
-      </div>
-    );
-  }
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContext;

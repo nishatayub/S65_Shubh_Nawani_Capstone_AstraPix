@@ -5,6 +5,7 @@ import { FileText, UserCheck, Scale, AlertTriangle } from 'lucide-react';
 
 const Terms = () => {
   return (
+    <>
     <div className="container mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-12">
       <div className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-gray-900/80 border-b border-white/10 shadow-lg">
         <SimpleHeader />
@@ -76,8 +77,9 @@ const Terms = () => {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
+    <Footer />
+    </>
   );
 };
 

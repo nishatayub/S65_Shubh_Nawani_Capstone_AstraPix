@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react'; // Keep original imports
 
 const Footer = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Keep original timer frequency
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const scrollToTop = () => {
+  // Memoize the scrollToTop function for better performance
+  const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
   return (
     <footer className="bg-gray-900/50 backdrop-blur-md border-t border-white/5 text-white">
@@ -82,4 +84,4 @@ const Footer = () => {
   );
 };
 
-export default Footer;
+export default React.memo(Footer);

@@ -20,9 +20,18 @@ const StatsGrid = lazy(() => import('./dashboard/StatsGrid'));
 import BackgroundImage from '../assets/bg.jpg';
 
 const CubeLoader = () => {
+  // The animation spans approximately 210px (from -25px to 185px)
+  const animationWidth = 210;
+
   return (
     <div className="flex justify-center items-center h-48 w-full">
-      <div className="relative" style={{ marginLeft: "-200px", willChange: "transform" }}>
+      <div 
+        className="relative"
+        style={{ 
+          width: `${animationWidth}px`,
+          height: "80px" // Enough height for the animation
+        }}
+      >
         {[...Array(5)].map((_, index) => (
           <motion.div
             key={index}
@@ -45,10 +54,8 @@ const CubeLoader = () => {
                   }
             }
             transition={{
-              duration: 1.5, // Slowed down slightly
-              times: index === 4 
-                ? [0, 0.33, 0.67, 1] 
-                : [0, 1],
+              duration: 1.5,
+              times: index === 4 ? [0, 0.33, 0.67, 1] : [0, 1],
               ease: "linear",
               repeat: Infinity
             }}
@@ -58,6 +65,7 @@ const CubeLoader = () => {
     </div>
   );
 };
+
 
 const Dashboard = () => {
   // Add ref for image generation section
@@ -210,53 +218,52 @@ const Dashboard = () => {
     setGeneratedImage(null);
 
     try {
-        const response = await axios.post(
-            `${import.meta.env.VITE_BASE_URI}/generate/generate`, 
-            { prompt: prompt.trim(), userId: user._id },
-            authHeaders
-        );
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URI}/generate/generate`, 
+        { prompt: prompt.trim(), userId: user._id },
+        authHeaders
+      );
 
-        if (response.data.success) {
-            setGeneratedImage(response.data.cloudinaryUrl);
-            setCredits(prev => prev - 1);
-            setPrompt('');
-            await fetchGalleryImages();
-            // Force gallery re-render by updating key
-            setGalleryKey(prev => prev + 1);
-            toast.success('Image generated successfully!', {
-              duration: 3000,
-              position: window.innerWidth < 640 ? 'bottom-center' : 'top-right',
-              style: {
-                background: '#1F2937',
-                color: '#fff',
-                maxWidth: '90vw',
-                wordBreak: 'break-word'
-              }
-            });
-        }
-    } catch (err) {
-        toast.error('Failed to generate image', {
+      if (response.data.success) {
+        setGeneratedImage(response.data.cloudinaryUrl);
+        setCredits(prev => prev - 1);
+        setPrompt('');
+        await fetchGalleryImages();
+        // Force gallery re-render by updating key
+        setGalleryKey(prev => prev + 1);
+        toast.success('Image generated successfully!', {
           duration: 3000,
           position: window.innerWidth < 640 ? 'bottom-center' : 'top-right',
           style: {
-            background: '#EF4444',
+            background: '#1F2937',
             color: '#fff',
-            maxWidth: '90vw'
+            maxWidth: '90vw',
+            wordBreak: 'break-word'
           }
         });
-        setGenerationError('Failed to generate image. Please try again.');
+      }
+    } catch (err) {
+      toast.error('Failed to generate image', {
+        duration: 3000,
+        position: window.innerWidth < 640 ? 'bottom-center' : 'top-right',
+        style: {
+          background: '#EF4444',
+          color: '#fff',
+          maxWidth: '90vw'
+        }
+      });
+      setGenerationError('Failed to generate image. Please try again.');
     } finally {
-        setGenerating(false);
+      setGenerating(false);
     }
-}, [prompt, credits, generating, user?._id, authHeaders, fetchGalleryImages]);
+  }, [prompt, credits, generating, user?._id, authHeaders, fetchGalleryImages]);
 
-  const scrollToGeneration = () => {
-    if (imageGenerationRef.current) {
-      const yOffset = -80; // Account for header
-      const y = imageGenerationRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-  };
+  const scrollToGeneration = useCallback(() => {
+    if (!imageGenerationRef.current) return;
+    const yOffset = -80; // Account for header
+    const y = imageGenerationRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }, []);
 
   // Memoized components
   const memoizedNav = useMemo(() => (
@@ -269,7 +276,7 @@ const Dashboard = () => {
       handleLogout={handleLogout}
       openPaymentModal={() => setIsPaymentModalOpen(true)}
     />
-  ), [user, credits, loading, darkMode]);
+  ), [user, credits, loading, darkMode, handleLogout]);
 
   const memoizedImageForm = useMemo(() => (
     <ImageGenerationForm 
@@ -283,37 +290,43 @@ const Dashboard = () => {
     />
   ), [prompt, credits, generating, generatedImage, generationError, handleGenerateImage]);
 
+  // Optimize recent images with aggressive quality reduction and caching
+  const recentImagesMemo = useMemo(() => {
+    const recentImages = userImages.slice(0, 3);
+    return recentImages.map(img => ({
+      ...img,
+      // More aggressive image optimization
+      imageUrl: img.imageUrl.replace('/upload/', '/upload/w_300,q_auto:eco,f_auto/'),
+      generatedAt: img.generatedAt 
+        ? new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        }).format(new Date(img.generatedAt))
+        : 'Not available',
+      createdAt: img.createdAt
+        ? new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        }).format(new Date(img.createdAt))
+        : 'Not available'
+    }));
+  }, [userImages]);
+
   // Memoize the gallery component
   const MemoizedGallery = useMemo(() => (
     <Gallery 
-      images={userImages}
+      key={galleryKey}
+      images={recentImagesMemo}
       loading={loadingImages}
       onDelete={handleDeleteImage}
+      showHeaderFooter={false}
+      isMinimal={true}
+      enableVirtualization={true}
+      imageSizingHint={{ width: 300, height: 300 }}
     />
-  ), [userImages, loadingImages]);
-
-  // Optimize recent images with aggressive quality reduction and caching
-  const recentImagesMemo = useMemo(() => 
-    userImages.slice(0, 3).map(img => ({
-        ...img,
-        // More aggressive image optimization
-        imageUrl: img.imageUrl.replace('/upload/', '/upload/w_300,q_auto:eco,f_auto/'),
-        generatedAt: img.generatedAt 
-            ? new Intl.DateTimeFormat('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            }).format(new Date(img.generatedAt))
-            : 'Not available',
-        createdAt: img.createdAt
-            ? new Intl.DateTimeFormat('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            }).format(new Date(img.createdAt))
-            : 'Not available'
-    }))
-  , [userImages]);
+  ), [galleryKey, recentImagesMemo, loadingImages, handleDeleteImage]);
 
   if (isInitializing) {
     return (
@@ -421,16 +434,7 @@ const Dashboard = () => {
               </div>
               <div className="content-visibility-auto"> {/* Add content-visibility optimization */}
                 <Suspense fallback={<div className="h-96 animate-pulse bg-white/5 rounded-lg" />}>
-                  <Gallery 
-                    key={galleryKey}
-                    images={recentImagesMemo}
-                    loading={loadingImages}
-                    onDelete={handleDeleteImage}
-                    showHeaderFooter={false}
-                    isMinimal={true}
-                    enableVirtualization={true}
-                    imageSizingHint={{ width: 300, height: 300 }}
-                  />
+                  {MemoizedGallery}
                 </Suspense>
               </div>
             </div>
