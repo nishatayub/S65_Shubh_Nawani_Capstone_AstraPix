@@ -1,10 +1,31 @@
-import React, { useState, useMemo, memo } from 'react';
+import React, { useState, useMemo, memo, useEffect } from 'react';
 import { Download, Share, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 const ImageCard = ({ image, onDelete }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  
+  useEffect(() => {
+    // Use Intersection Observer to detect when card is in viewport
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    
+    const currentElement = document.getElementById(`image-card-${image._id}`);
+    if (currentElement) observer.observe(currentElement);
+    
+    return () => {
+      if (currentElement) observer.disconnect();
+    };
+  }, [image._id]);
 
   const handleDelete = async () => {
     try {
@@ -84,14 +105,28 @@ const ImageCard = ({ image, onDelete }) => {
   , [image.imageUrl]);
 
   return (
-    <div className="relative aspect-square rounded-lg overflow-hidden bg-black/5 touch-manipulation">
-      <img
-        src={thumbnailUrl}
-        alt={image.prompt}
-        loading="lazy"
-        className="w-full h-full object-cover transition-transform duration-200"
-        onLoad={() => setImageLoaded(true)}
-      />
+    <div 
+      id={`image-card-${image._id}`}
+      className="relative aspect-square rounded-lg overflow-hidden bg-black/5 touch-manipulation group"
+    >
+      {isInView ? (
+        <>
+          {!imageLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 animate-pulse">
+              <span className="sr-only">Loading image...</span>
+            </div>
+          )}
+          <img
+            src={thumbnailUrl}
+            alt={image.prompt}
+            loading="lazy"
+            className={`w-full h-full object-cover transition-transform duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setImageLoaded(true)}
+          />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-gray-100"></div>
+      )}
       
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 touch:opacity-100">
         <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">

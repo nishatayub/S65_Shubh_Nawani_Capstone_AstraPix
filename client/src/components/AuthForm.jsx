@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import GoogleIcon from '../assets/google.png';
@@ -21,24 +21,46 @@ const AuthForm = ({
 }) => {
   const [passwordError, setPasswordError] = useState('');
 
-  const handlePasswordChange = (e) => {
+  // Memoize password validation criteria
+  const passwordValidation = useMemo(() => {
+    return { minLength: 8, maxLength: 16 };
+  }, []);
+
+  // Optimize password change handler with useCallback
+  const handlePasswordChange = useCallback((e) => {
     const value = e.target.value;
-    if (!isLogin && (value.length < 8 || value.length > 16)) {
-      setPasswordError('Password must be between 8 and 16 characters');
+    if (!isLogin && (value.length < passwordValidation.minLength || value.length > passwordValidation.maxLength)) {
+      setPasswordError(`Password must be between ${passwordValidation.minLength} and ${passwordValidation.maxLength} characters`);
     } else {
       setPasswordError('');
     }
     handleChange(e);
-  };
+  }, [isLogin, handleChange, passwordValidation]);
 
-  const handleFormSubmit = (e) => {
+  // Optimize form submission with useCallback
+  const handleFormSubmit = useCallback((e) => {
     e.preventDefault();
-    if (!isLogin && (formData.password.length < 8 || formData.password.length > 16)) {
-      setPasswordError('Password must be between 8 and 16 characters');
+    
+    // Only validate password on register
+    if (!isLogin && (formData.password.length < passwordValidation.minLength || 
+                     formData.password.length > passwordValidation.maxLength)) {
+      setPasswordError(`Password must be between ${passwordValidation.minLength} and ${passwordValidation.maxLength} characters`);
       return;
     }
+    
     handleSubmit(e);
-  };
+  }, [isLogin, formData.password, handleSubmit, passwordValidation]);
+
+  // Compute button text based on component state
+  const buttonText = useMemo(() => {
+    if (isSubmitting) return null;
+    return isLogin ? 'Sign In' : 'Create Account';
+  }, [isLogin, isSubmitting]);
+  
+  // Generate password hint text
+  const passwordHintText = useMemo(() => {
+    return passwordError || `Password must be between ${passwordValidation.minLength} and ${passwordValidation.maxLength} characters`;
+  }, [passwordError, passwordValidation]);
 
   return (
     <motion.div
@@ -63,6 +85,8 @@ const AuthForm = ({
             className="w-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 bg-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
             required
             autoComplete="email"
+            aria-label="Email"
+            autoCapitalize="off"
           />
           <div className="space-y-1">
             <div className="relative">
@@ -75,11 +99,17 @@ const AuthForm = ({
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 bg-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
                 required
                 autoComplete={isLogin ? "current-password" : "new-password"}
+                aria-label="Password"
+                aria-invalid={!!passwordError}
+                aria-describedby={!isLogin ? "password-requirements" : undefined}
               />
             </div>
             {!isLogin && (
-              <p className={`text-xs ${passwordError ? 'text-red-400' : 'text-white/50'}`}>
-                {passwordError || 'Password must be between 8 and 16 characters'}
+              <p 
+                id="password-requirements"
+                className={`text-xs ${passwordError ? 'text-red-400' : 'text-white/50'}`}
+              >
+                {passwordHintText}
               </p>
             )}
           </div>
@@ -97,17 +127,22 @@ const AuthForm = ({
           </div>
         )}
         
-        {error && <p className="text-red-400 text-xs sm:text-sm">{error}</p>}
+        {error && (
+          <p className="text-red-400 text-xs sm:text-sm" role="alert">
+            {error}
+          </p>
+        )}
         
         <button
           type="submit"
           disabled={isSubmitting}
           className="w-full py-2 sm:py-2.5 md:py-3 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg text-white font-semibold hover:opacity-90 transition-all disabled:opacity-50 text-sm sm:text-base touch-manipulation"
+          aria-busy={isSubmitting}
         >
           {isSubmitting ? (
-            <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin mx-auto" />
+            <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin mx-auto" aria-hidden="true" />
           ) : (
-            isLogin ? 'Sign In' : 'Create Account'
+            buttonText
           )}
         </button>
       </form>

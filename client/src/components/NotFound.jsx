@@ -1,10 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 
 const NotFound = () => {
   const { isAuthenticated } = useAuth();
+
+  // Set page title for accessibility
+  useEffect(() => {
+    const originalTitle = document.title;
+    document.title = "404 - Page Not Found | AstraPix";
+    
+    return () => {
+      document.title = originalTitle;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-purple-900 p-4">
@@ -13,9 +23,11 @@ const NotFound = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
+        role="alert"
+        aria-live="polite"
       >
         {/* Animated Canvas and Elements */}
-        <div className="relative h-48 sm:h-72 w-48 sm:w-72 mx-auto mb-6 sm:mb-8">
+        <div className="relative h-48 sm:h-72 w-48 sm:w-72 mx-auto mb-6 sm:mb-8" aria-hidden="true">
           {/* Background Shape */}
           <motion.div
             className="absolute inset-0 bg-purple-200/30 dark:bg-purple-700/30 rounded-full"
@@ -26,7 +38,11 @@ const NotFound = () => {
             transition={{
               duration: 20,
               repeat: Infinity,
-              ease: "linear"
+              ease: "linear",
+              repeatType: "loop"
+            }}
+            style={{ 
+              willChange: "transform" 
             }}
           />
 
@@ -39,7 +55,14 @@ const NotFound = () => {
             transition={{
               duration: 15,
               repeat: Infinity,
-              ease: "linear"
+              ease: "linear",
+              repeatType: "loop"
+            }}
+            style={{ 
+              willChange: "transform",
+              backfaceVisibility: "hidden",
+              perspective: 1000,
+              transformStyle: "preserve-3d"
             }}
           >
             {/* Animated Gradient */}
@@ -51,7 +74,11 @@ const NotFound = () => {
               transition={{
                 duration: 3,
                 repeat: Infinity,
-                ease: "easeInOut"
+                ease: "easeInOut",
+                repeatType: "mirror"
+              }}
+              style={{ 
+                willChange: "transform" 
               }}
             />
           </motion.div>
@@ -66,7 +93,11 @@ const NotFound = () => {
             transition={{
               duration: 4,
               repeat: Infinity,
-              ease: "easeInOut"
+              ease: "easeInOut",
+              repeatType: "mirror"
+            }}
+            style={{ 
+              willChange: "transform" 
             }}
           >
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600">
@@ -82,9 +113,9 @@ const NotFound = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
             Oops! Page Lost in the Creative Void
-          </h2>
+          </h1>
           <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-300 max-w-md mx-auto">
             Looks like this page took a journey into the artistic unknown! 
             Let's get you back to where the magic happens ✨
@@ -97,7 +128,7 @@ const NotFound = () => {
           >
             <Link
               to={isAuthenticated ? '/dashboard' : '/auth'}
-              className="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 sm:px-6 md:px-8 py-2 sm:py-3 rounded-full font-medium shadow-lg transition-all duration-200 text-sm sm:text-base touch-manipulation"
+              className="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 sm:px-6 md:px-8 py-2 sm:py-3 rounded-full font-medium shadow-lg transition-all duration-200 text-sm sm:text-base touch-manipulation focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-gray-50 dark:focus:ring-offset-gray-900 cursor-pointer"
             >
               Return to {isAuthenticated ? 'AstraPix Studio' : 'Login'} 🎨
             </Link>
@@ -108,4 +139,4 @@ const NotFound = () => {
   );
 };
 
-export default NotFound;
+export default React.memo(NotFound);

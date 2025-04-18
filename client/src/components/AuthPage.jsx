@@ -1,7 +1,7 @@
-import React, { useState, useContext, useCallback } from 'react';
+import React, { useState, useContext, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, Loader2, Mail } from 'lucide-react'; // Removed Eye, EyeOff since they're in AuthForm
+import { Sun, Moon, Loader2, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import BackgroundImage from '../assets/bg.jpg';
@@ -30,8 +30,11 @@ const AuthPage = () => {
   const [otp, setOtp] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
+  
+  // Add a ref to track submission to prevent duplicate requests
+  const isSubmittingRef = useRef(false);
 
-  // Optimize form reset
+  // Optimize form reset with proper dependency
   const handleToggle = useCallback(() => {
     setIsLogin(!isLogin);
     setError(null);
@@ -40,22 +43,24 @@ const AuthPage = () => {
     setOtp('');
   }, [isLogin]);
 
-  const handleChange = (e) => {
+  // Memoize form change handler
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setError(null);
-  };
+  }, []);
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = useCallback(() => {
     window.location.href = `${import.meta.env.VITE_BASE_URI}/auth/google`;
-  };
+  }, []);
 
-  // Add request timeout
-  const handleSubmit = async (e) => {
+  // Add request timeout and improved error handling
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || isSubmittingRef.current) return;
     
     setIsSubmitting(true);
+    isSubmittingRef.current = true;
     setError(null);
 
     try {
@@ -89,18 +94,22 @@ const AuthPage = () => {
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Something went wrong');
-      toast.error(err.response?.data?.message || 'Something went wrong');
+      const errorMessage = err.response?.data?.message || 
+                          (err.code === 'ECONNABORTED' ? 'Request timed out' : 'Something went wrong');
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
-  };
+  }, [isLogin, formData, login, navigate]);
 
-  const handleVerifyOTP = async (e) => {
+  const handleVerifyOTP = useCallback(async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || isSubmittingRef.current) return;
 
     setIsSubmitting(true);
+    isSubmittingRef.current = true;
     setError(null);
 
     try {
@@ -114,16 +123,21 @@ const AuthPage = () => {
       toast.success('Account created successfully!');
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Something went wrong');
-      toast.error(err.response?.data?.message || 'Something went wrong');
+      const errorMessage = err.response?.data?.message || 
+                          (err.code === 'ECONNABORTED' ? 'Request timed out' : 'Something went wrong');
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
-  };
+  }, [formData, otp, login, navigate]);
 
-  const resendOTP = async () => {
-    if (isSubmitting) return;
+  const resendOTP = useCallback(async () => {
+    if (isSubmitting || isSubmittingRef.current) return;
+    
     setIsSubmitting(true);
+    isSubmittingRef.current = true;
     
     try {
       await axios.post(`${import.meta.env.VITE_BASE_URI}/api/send-otp`, {
@@ -134,12 +148,17 @@ const AuthPage = () => {
       toast.error('Failed to send OTP');
     } finally {
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
-  };
+  }, [formData.email, isSubmitting]);
 
-  const handleForgotPassword = () => {
+  const handleForgotPassword = useCallback(() => {
     setShowForgotPassword(true);
-  };
+  }, []);
+
+  const handleBackToLogin = useCallback(() => {
+    setShowForgotPassword(false);
+  }, []);
 
   return (
     <div className="min-h-screen relative overflow-hidden overscroll-none">
@@ -224,7 +243,7 @@ const AuthPage = () => {
                       isSubmitting={isSubmitting}
                       error={error}
                       handleGoogleLogin={handleGoogleLogin}
-                      onForgotPassword={() => setShowForgotPassword(true)}
+                      onForgotPassword={handleForgotPassword}
                     />
                   </>
                 ) : (
@@ -285,7 +304,7 @@ const AuthPage = () => {
                 )}
               </>
             ) : (
-              <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
+              <ForgotPasswordForm onBack={handleBackToLogin} />
             )}
           </AnimatePresence>
         </motion.div>
