@@ -17,8 +17,7 @@ const PaymentModal = lazy(() => import('../modals/PaymentModal'));
 
 // Separate into smaller components
 const ActionButton = React.memo(({ icon, onClick, danger = false, label, loading = false }) => (
-  <motion.button
-    whileTap={{ scale: 0.95 }}
+  <button
     onClick={(e) => {
       e.stopPropagation();
       onClick();
@@ -39,7 +38,7 @@ const ActionButton = React.memo(({ icon, onClick, danger = false, label, loading
         'aria-hidden': true
       })
     )}
-  </motion.button>
+  </button>
 ));
 
 // Break out ImageCard component for better memoization
@@ -56,123 +55,169 @@ const ImageCard = React.memo(({
   toggleFavorite, 
   openFullscreen,
   setupImageObserver
-}) => (
-  <motion.div
-    key={image._id}
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    exit={{ opacity: 0, scale: 0.9 }}
-    transition={{ duration: 0.2, delay: index * 0.05 }}
-    className="group relative rounded-xl overflow-hidden bg-black/20 backdrop-blur-sm border border-white/5 shadow-lg min-h-[200px] flex items-center"
-    role="listitem"
-    tabIndex={0}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        openFullscreen(image);
-      }
-    }}
-    aria-label={`Image generated from prompt: ${image.prompt}`}
-  >
-    <div className="relative w-full h-full flex items-center justify-center p-4">
-      <div 
-        className="absolute inset-0 bg-gray-800/50 flex items-center justify-center"
-        style={{ display: image.loaded ? 'none' : 'flex' }}
-        aria-hidden="true"
-      >
-        <Loader className="w-6 h-6 text-purple-400 animate-spin" />
-      </div>
-      <img
-        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E"
-        data-src={image.imageUrl}
-        alt={`AI-generated image: ${image.prompt}`}
-        className="w-auto h-auto max-w-full max-h-[400px] object-contain rounded-lg transform transition-transform duration-300 group-hover:scale-110"
-        loading="lazy"
-        ref={setupImageObserver}
-        onLoad={(e) => {
-          e.target.style.opacity = 1;
-          e.target.src = image.imageUrl;
-          image.loaded = true;
-        }}
-        onError={(e) => {
-          console.error('Image failed to load:', image.imageUrl);
-          e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23555'/%3E%3Ctext x='50' y='50' text-anchor='middle' dominant-baseline='middle' fill='%23fff' font-size='15'%3EImage Error%3C/text%3E%3C/svg%3E";
-        }}
-        style={{ opacity: 0, transition: 'opacity 0.3s ease-in-out' }}
-      />
-    </div>
+}) => {
+  // Force static rendering when not in view
+  const [isInViewport, setIsInViewport] = useState(false);
+  const cardRef = useRef(null);
+  
+  // Detect touch devices
+  const isTouch = useRef('ontouchstart' in window);
+  
+  // Set up viewport detection
+  useEffect(() => {
+    if (!cardRef.current) return;
     
-    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 md:duration-200 md:transition-opacity focus-within:opacity-100 touch:opacity-100">
-      <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:p-4">
-        <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleFavorite(image._id);
-            }}
-            className={`p-1.5 sm:p-2 rounded-full touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1 focus:ring-offset-gray-900 ${
-              favorites.includes(image._id) 
-                ? 'bg-purple-500/30' 
-                : 'bg-white/20'
-            }`}
-            aria-label={favorites.includes(image._id) ? "Remove from favorites" : "Add to favorites"}
-            aria-pressed={favorites.includes(image._id)}
-          >
-            <Heart 
-              className={`w-3 h-3 sm:w-4 sm:h-4 ${
-                favorites.includes(image._id) 
-                  ? 'text-purple-400 fill-purple-400' 
-                  : 'text-white'
-              }`}
-              aria-hidden="true"
-            />
-          </button>
-          {downloadCounts[image._id] > 0 && (
-            <span className="text-xs text-white/60" aria-live="polite">
-              {downloadCounts[image._id]} downloads
-            </span>
-          )}
-          {shareCounts[image._id] > 0 && (
-            <span className="text-xs text-white/60" aria-live="polite">
-              {shareCounts[image._id]} shares
-            </span>
-          )}
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsInViewport(true);
+        } else {
+          setIsInViewport(false);
+        }
+      },
+      { rootMargin: '100px' }
+    );
+    
+    observer.observe(cardRef.current);
+    
+    return () => {
+      observer.disconnect();
+      if (cardRef.current) {
+        setupImageObserver(cardRef.current, true); // Clean up
+      }
+    };
+  }, [setupImageObserver]);
+  
+  // For non-visible cards, return a simpler version
+  if (!isInViewport) {
+    return (
+      <div 
+        ref={cardRef}
+        className="rounded-xl overflow-hidden bg-gray-800 border border-white/5 shadow-md min-h-[200px]" 
+        style={{ aspectRatio: "4/3" }}
+      />
+    );
+  }
+  
+  return (
+    <div
+      ref={cardRef}
+      className="group relative rounded-xl overflow-hidden bg-gray-800 border border-white/5 shadow-md min-h-[200px] flex items-center"
+      role="listitem"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openFullscreen(image);
+        }
+      }}
+      aria-label={`Image generated from prompt: ${image.prompt}`}
+    >
+      <div className="relative w-full h-full flex items-center justify-center p-4">
+        <div 
+          className="absolute inset-0 bg-gray-800 flex items-center justify-center"
+          style={{ display: image.loaded ? 'none' : 'flex' }}
+          aria-hidden="true"
+        >
+          <Loader className="w-6 h-6 text-purple-400 animate-spin" />
         </div>
-        <p className="text-white text-xs sm:text-sm line-clamp-2 mb-2 sm:mb-3">
-          {image.prompt}
-        </p>
-        <div className="flex justify-between items-center">
-          <div className="flex space-x-2">
-            <ActionButton 
-              icon={<Download />} 
-              onClick={() => handleDownload(image)} 
-              label="Download image"
-              loading={downloadProgress[image._id]}
-            />
-            {navigator.share && (
-              <ActionButton 
-                icon={<Share2 />} 
-                onClick={() => handleShare(image)} 
-                label="Share image"
+        
+        <img
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E"
+          data-src={image.imageUrl}
+          alt={`AI-generated image: ${image.prompt}`}
+          className="w-auto h-auto max-w-full max-h-[400px] object-contain rounded-lg transform transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"
+          ref={(node) => node && setupImageObserver(node)}
+          onLoad={(e) => {
+            e.target.style.opacity = 1;
+            image.loaded = true;
+          }}
+          onError={(e) => {
+            console.error('Image failed to load:', image.imageUrl);
+            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23555'/%3E%3Ctext x='50' y='50' text-anchor='middle' dominant-baseline='middle' fill='%23fff' font-size='15'%3EImage Error%3C/text%3E%3C/svg%3E";
+          }}
+          style={{ opacity: 0, transition: 'opacity 0.3s ease-in-out' }}
+        />
+      </div>
+      
+      {/* Replaced complex gradient with a simple dark overlay */}
+      <div 
+        className={`absolute inset-0 bg-black/70 ${
+          isTouch.current ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 transition-opacity duration-200'
+        } md:transition-opacity focus-within:opacity-100`}
+      >
+        <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:p-4">
+          <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFavorite(image._id);
+              }}
+              className={`p-1.5 sm:p-2 rounded-full touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1 focus:ring-offset-gray-900 ${
+                favorites.includes(image._id) 
+                  ? 'bg-purple-500/30' 
+                  : 'bg-white/20'
+              }`}
+              aria-label={favorites.includes(image._id) ? "Remove from favorites" : "Add to favorites"}
+              aria-pressed={favorites.includes(image._id)}
+            >
+              <Heart 
+                className={`w-3 h-3 sm:w-4 sm:h-4 ${
+                  favorites.includes(image._id) 
+                    ? 'text-purple-400 fill-purple-400' 
+                    : 'text-white'
+                }`}
+                aria-hidden="true"
               />
+            </button>
+            {downloadCounts[image._id] > 0 && (
+              <span className="text-xs text-white/60" aria-live="polite">
+                {downloadCounts[image._id]} downloads
+              </span>
             )}
+            {shareCounts[image._id] > 0 && (
+              <span className="text-xs text-white/60" aria-live="polite">
+                {shareCounts[image._id]} shares
+              </span>
+            )}
+          </div>
+          <p className="text-white text-xs sm:text-sm line-clamp-2 mb-2 sm:mb-3">
+            {image.prompt}
+          </p>
+          <div className="flex justify-between items-center">
+            <div className="flex space-x-2">
+              <ActionButton 
+                icon={<Download />} 
+                onClick={() => handleDownload(image)} 
+                label="Download image"
+                loading={downloadProgress[image._id]}
+              />
+              {navigator.share && (
+                <ActionButton 
+                  icon={<Share2 />} 
+                  onClick={() => handleShare(image)} 
+                  label="Share image"
+                />
+              )}
+              <ActionButton 
+                icon={<Maximize2 />} 
+                onClick={() => openFullscreen(image)} 
+                label="View fullscreen"
+              />
+            </div>
             <ActionButton 
-              icon={<Maximize2 />} 
-              onClick={() => openFullscreen(image)} 
-              label="View fullscreen"
+              icon={<Trash2 />} 
+              onClick={() => handleDelete(image._id)} 
+              danger 
+              label="Delete image"
             />
           </div>
-          <ActionButton 
-            icon={<Trash2 />} 
-            onClick={() => handleDelete(image._id)} 
-            danger 
-            label="Delete image"
-          />
         </div>
       </div>
     </div>
-  </motion.div>
-));
+  );
+});
 
 // Optimized Gallery component
 const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
@@ -201,8 +246,12 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
   const deleteModalRef = useRef(null);
   const fullscreenModalRef = useRef(null);
   const searchInputRef = useRef(null);
-  const observersRef = useRef([]);
   const galleryRef = useRef(null);
+  const imagesLoadedRef = useRef({});
+  const fullImageLoadingRef = useRef(false);
+  
+  // Improve intersection observer implementation
+  const observerRef = useRef(null);
   
   // Track mounted state for async operations
   const isMounted = useRef(true);
@@ -210,13 +259,39 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
   // Debounce search to prevent excessive re-renders
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   
+  // Create a single IntersectionObserver instance that's reused
   useEffect(() => {
+    // Use requestIdleCallback for non-essential setup
+    const scheduleObserverSetup = window.requestIdleCallback || window.setTimeout;
+    
+    scheduleObserverSetup(() => {
+      if (!observerRef.current && isMounted.current) {
+        observerRef.current = new IntersectionObserver(
+          (entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                const img = entry.target;
+                if (img.dataset.src && img.src !== img.dataset.src) {
+                  // Set the src to data-src when image is visible
+                  img.src = img.dataset.src;
+                  observerRef.current.unobserve(img);
+                }
+              }
+            });
+          },
+          { rootMargin: '200px', threshold: 0.01 }
+        );
+      }
+    }, { timeout: 500 });
+    
     return () => {
       isMounted.current = false;
       
-      // Cleanup all observers
-      observersRef.current.forEach(observer => observer.disconnect());
-      observersRef.current = [];
+      // Cleanup observer when component unmounts
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
     };
   }, []);
 
@@ -255,11 +330,10 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
       });
       
       if (isMounted.current) {
-        // Optimize initial image format with blurred placeholders
+        // Optimize initial image format
         const optimizedImages = (response.data.images || []).map(img => ({
           ...img,
-          loaded: false,
-          optimizedUrl: img.imageUrl.replace('/upload/', '/upload/w_400,f_auto,q_auto:low/')
+          loaded: false
         }));
         
         setImages(optimizedImages);
@@ -336,7 +410,23 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
     }
   }, [imageToDelete, fetchImages]);
 
-  // Improved with blob caching
+  // Optimized image observer setup
+  const setupImageObserver = useCallback((node, cleanup = false) => {
+    if (!node) return;
+    
+    // If we're cleaning up, unobserve the node
+    if (cleanup) {
+      observerRef.current?.unobserve(node);
+      return;
+    }
+    
+    // Otherwise observe the node
+    if (observerRef.current) {
+      observerRef.current.observe(node);
+    }
+  }, []);
+
+  // Improved with blob caching and simplified logic
   const handleShare = useCallback(async (image) => {
     try {
       // Start with a loading indicator
@@ -446,41 +536,6 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
     }
   }, []);
 
-  // Improved image lazy loading with IntersectionObserver pool
-  const setupImageObserver = useCallback((node) => {
-    if (!node) return;
-    
-    // Reuse existing observer if possible
-    let observer = observersRef.current.find(obs => obs.root === null);
-    
-    if (!observer) {
-      observer = new IntersectionObserver(
-        entries => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              const img = entry.target;
-              if (img.dataset.src && img.src !== img.dataset.src) {
-                // Preload image
-                const preloadImg = new Image();
-                preloadImg.onload = () => {
-                  img.src = img.dataset.src;
-                  img.style.opacity = 1;
-                };
-                preloadImg.src = img.dataset.src;
-                observer.unobserve(img);
-              }
-            }
-          });
-        },
-        { rootMargin: '200px', threshold: 0.01 }
-      );
-      
-      observersRef.current.push(observer);
-    }
-    
-    observer.observe(node);
-  }, []);
-
   // Handle keyboard navigation for modals
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -551,14 +606,6 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
     });
   }, []);
 
-  // Memoized optimized images (with CDN params)
-  const optimizedImages = useMemo(() => 
-    paginatedImages.map(img => ({
-      ...img,
-      optimizedUrl: img.imageUrl.replace('/upload/', '/upload/w_400,f_auto,q_auto:good/')
-    }))
-  , [paginatedImages]);
-
   // Handler to open fullscreen view with keyboard accessibility
   const openFullscreen = useCallback((image) => {
     setFullscreenImage(image);
@@ -568,97 +615,135 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
     }, 100);
   }, []);
 
-  // Render functions as memoized components
-  const FullscreenViewer = useCallback(({ image }) => (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-2 sm:p-4"
-      onClick={() => setFullscreenImage(null)}
+// Completely rebuilt FullscreenViewer with guaranteed visibility
+const FullscreenViewer = useCallback(({ image }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Create ref for the component
+  const modalContainerRef = useRef(null);
+  
+  useEffect(() => {
+    // Reset loading state when image changes
+    setIsLoading(true);
+    
+    // Ensure body doesn't scroll while modal is open
+    document.body.style.overflow = 'hidden';
+    
+    // Focus trap
+    if (modalContainerRef.current) {
+      modalContainerRef.current.focus();
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [image]);
+  
+  return (
+    <div 
+      className="fixed inset-0 bg-black text-white z-[9999]"
+      ref={modalContainerRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
-      aria-label={`Fullscreen view: ${image.prompt}`}
+      aria-labelledby="modal-title"
     >
-      <motion.div 
-        ref={fullscreenModalRef}
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="relative w-full h-full max-w-7xl mx-auto flex flex-col items-center justify-center"
-        onClick={e => e.stopPropagation()}
-        tabIndex={-1}
-      >
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          onClick={() => setFullscreenImage(null)}
-          className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white z-50 touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black"
-          aria-label="Close fullscreen view"
-        >
-          <X className="w-4 h-4 sm:w-5 sm:h-5" />
-        </motion.button>
-
-        <div className="relative w-full h-full flex items-center justify-center p-4">
+      {/* Fixed header with guaranteed visibility */}
+      <div className="fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-700 shadow-lg z-10">
+        <div className="flex items-center justify-between p-3 max-w-7xl mx-auto">
+          <h2 id="modal-title" className="text-lg font-medium truncate">
+            {image.prompt}
+          </h2>
+          <button
+            onClick={() => setFullscreenImage(null)}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md flex items-center"
+            aria-label="Close fullscreen view"
+          >
+            <X className="w-5 h-5 mr-1" /> Close
+          </button>
+        </div>
+      </div>
+      
+      {/* Main content area with proper padding */}
+      <div className="flex flex-col h-full pt-16 pb-24">
+        {/* Image container with loading state */}
+        <div className="flex-1 flex items-center justify-center p-4 relative">
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader className="w-12 h-12 text-purple-500 animate-spin" />
+            </div>
+          )}
+          
           <img
             src={image.imageUrl}
             alt={`AI-generated image: ${image.prompt}`}
-            className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg"
+            className="max-w-full max-h-[calc(100vh-200px)] object-contain rounded-md shadow-xl"
+            onLoad={() => setIsLoading(false)}
+            onError={() => setIsLoading(false)}
+            style={{ opacity: isLoading ? 0 : 1, transition: 'opacity 0.3s ease' }}
           />
         </div>
-
-        <div className="w-full max-w-3xl mx-auto p-4 bg-gray-900/95 backdrop-blur-md rounded-lg mt-4">
-          <p className="text-white/90 text-sm mb-3">{image.prompt}</p>
-          <div className="flex items-center justify-center gap-4">
-            <ActionButton
-              icon={<Download />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDownload(image);
-              }}
-              label="Download image"
-            />
-            <ActionButton
-              icon={<Share2 />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleShare(image);
-              }}
-              label="Share image"
-            />
-            <ActionButton
-              icon={<Trash2 />}
-              onClick={(e) => {
-                e.stopPropagation();
+        
+        {/* Fixed footer with actions */}
+        <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 py-4 px-6 z-10">
+          <div className="max-w-xl mx-auto flex justify-center space-x-6">
+            <button
+              onClick={() => handleDownload(image)}
+              className="flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-md transition-colors"
+            >
+              <Download className="w-5 h-5" />
+              <span>Download</span>
+            </button>
+            
+            {navigator.share && (
+              <button
+                onClick={() => handleShare(image)}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+              >
+                <Share2 className="w-5 h-5" />
+                <span>Share</span>
+              </button>
+            )}
+            
+            <button
+              onClick={() => {
                 handleDelete(image._id);
                 setFullscreenImage(null);
               }}
-              danger
-              label="Delete image"
-            />
+              className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+            >
+              <Trash2 className="w-5 h-5" />
+              <span>Delete</span>
+            </button>
           </div>
         </div>
-      </motion.div>
-    </motion.div>
-  ), [handleDelete, handleDownload, handleShare]);
+      </div>
+      
+      {/* Extra close button in bottom right for redundancy */}
+      <button
+        onClick={() => setFullscreenImage(null)}
+        className="fixed bottom-20 right-4 bg-gray-800 hover:bg-gray-700 p-3 rounded-full shadow-lg z-20"
+        aria-label="Close"
+      >
+        <X className="w-6 h-6" />
+      </button>
+    </div>
+  );
+}, [handleDelete, handleDownload, handleShare, setFullscreenImage]);
+
 
   // Delete confirmation modal as memoized component
   const DeleteConfirmationModal = useCallback(() => (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="delete-modal-title"
       aria-describedby="delete-modal-description"
     >
-      <motion.div
+      <div
         ref={deleteModalRef}
-        initial={{ scale: 0.95 }}
-        animate={{ scale: 1 }}
-        exit={{ scale: 0.95 }}
-        className="bg-gray-900 border border-purple-500/20 rounded-lg p-6 max-w-sm w-full shadow-xl backdrop-blur-sm"
+        className="bg-gray-900 border border-purple-500/20 rounded-lg p-6 max-w-sm w-full shadow-xl"
         tabIndex={-1}
       >
         <div className="flex items-center gap-3 mb-4">
@@ -681,8 +766,8 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
             Delete
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   ), [confirmDelete]);
 
   // Show loading state
@@ -700,14 +785,12 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
             openPaymentModal={() => setIsPaymentModalOpen(true)}
           />
         )}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+        <div 
           className="flex flex-col items-center justify-center min-h-[400px]"
         >
           <Loader className="w-8 h-8 text-purple-500 animate-spin" aria-hidden="true" />
           <p className="mt-4 text-white/60" role="status">Loading your gallery...</p>
-        </motion.div>
+        </div>
         {showHeaderFooter && <Footer />}
       </>
     );
@@ -716,7 +799,7 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
   return (
     <>
       {showHeaderFooter && (
-        <div className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-gray-900/80 border-b border-white/10 shadow-lg">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-gray-900 border-b border-white/10 shadow-lg">
           <Navbar 
             user={user}
             credits={credits}
@@ -728,13 +811,12 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
           />
         </div>
       )}
-      <div className="min-h-screen p-4 sm:p-6 lg:p-8 mt-16 bg-gradient-to-b from-gray-800/50 via-gray-900/30 to-purple-900/20 backdrop-blur-lg"> 
+      {/* Simplified gradient background to solid color */}
+      <div className="min-h-screen p-4 sm:p-6 lg:p-8 mt-16 bg-gray-900"> 
         <div className="max-w-6xl mx-auto relative z-10">
           {!isMinimal && (
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 bg-gray-800/30 backdrop-blur-xl p-4 rounded-lg border border-purple-500/10 shadow-xl"
+            <div 
+              className="mb-6 bg-gray-800 p-4 rounded-lg border border-purple-500/10 shadow-lg"
             >
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-grow">
@@ -790,15 +872,13 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Error display */}
           {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 bg-red-500/20 backdrop-blur-sm p-4 rounded-lg border border-red-500/20 text-white"
+            <div
+              className="mb-6 bg-red-500/20 p-4 rounded-lg border border-red-500/20 text-white"
               role="alert"
             >
               <div className="flex items-center gap-2">
@@ -811,16 +891,17 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
               >
                 Retry
               </button>
-            </motion.div>
+            </div>
           )}
 
-          <AnimatePresence mode="wait">
+          {/* Use simplified transitions for AnimatePresence */}
+          <AnimatePresence mode="wait" initial={false}>
             {!images.length ? (
               <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="col-span-full text-center py-16 bg-black/20 rounded-xl border border-white/10 backdrop-blur-sm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="col-span-full text-center py-16 bg-black/20 rounded-xl border border-white/10"
                 role="status"
               >
                 <p className="text-white/80 mb-4">No images generated yet. Start creating!</p>
@@ -833,10 +914,10 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
               </motion.div>
             ) : filteredImages.length === 0 ? (
               <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="col-span-full text-center py-16 bg-black/20 rounded-xl border border-white/10 backdrop-blur-sm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="col-span-full text-center py-16 bg-black/20 rounded-xl border border-white/10"
                 role="status"
               >
                 <p className="text-white/80 mb-4">
@@ -863,11 +944,12 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
             ) : (
               <div 
                 ref={galleryRef}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 contain-intrinsic-size: 1px 5000px"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 content-visibility-auto"
                 role="list"
                 aria-label="Generated images gallery"
+                style={{ contain: 'layout style paint' }}
               >
-                {optimizedImages.map((image, index) => (
+                {paginatedImages.map((image, index) => (
                   <ImageCard
                     key={image._id}
                     image={image}
@@ -894,20 +976,35 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
             onClose={() => setSelectedImage(null)}
           />
 
-          <AnimatePresence>
+          {/* Simplify motion animations */}
+          <AnimatePresence initial={false}>
             {fullscreenImage && (
-              <FullscreenViewer image={fullscreenImage} />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <FullscreenViewer image={fullscreenImage} />
+              </motion.div>
             )}
           </AnimatePresence>
 
-          <AnimatePresence>
-            {showDeleteModal && <DeleteConfirmationModal />}
+          <AnimatePresence initial={false}>
+            {showDeleteModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <DeleteConfirmationModal />
+              </motion.div>
+            )}
           </AnimatePresence>
 
           {!isMinimal && filteredImages.length > ITEMS_PER_PAGE && (
-            <motion.nav 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+            <nav 
               className="mt-6 flex items-center justify-center gap-2"
               aria-label="Pagination"
             >
@@ -929,10 +1026,8 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
                       (idx >= currentPage - 2 && idx <= currentPage)
                     ) {
                       return (
-                        <motion.button
+                        <button
                           key={idx}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
                           onClick={() => setCurrentPage(idx + 1)}
                           className={`min-w-[32px] px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1 focus:ring-offset-gray-900 ${
                             currentPage === idx + 1 
@@ -943,7 +1038,7 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
                           aria-current={currentPage === idx + 1 ? 'page' : undefined}
                         >
                           {idx + 1}
-                        </motion.button>
+                        </button>
                       );
                     } else if (
                       idx === currentPage - 3 || 
@@ -963,24 +1058,22 @@ const Gallery = ({ showHeaderFooter = true, isMinimal = false }) => {
               >
                 Next
               </button>
-            </motion.nav>
+            </nav>
           )}
 
           {!isMinimal && images.length > 0 && (
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+            <p 
               className="text-center text-white/60 mt-4 mb-6"
               aria-live="polite"
             >
               Showing {paginatedImages.length} of {filteredImages.length} image{filteredImages.length !== 1 ? 's' : ''}
-            </motion.p>
+            </p>
           )}
         </div>
       </div>
 
       {isPaymentModalOpen && (
-        <Suspense fallback={<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+        <Suspense fallback={<div className="fixed inset-0 bg-black/50 flex items-center justify-center">
           <Loader className="w-8 h-8 text-purple-500 animate-spin" />
         </div>}>
           <PaymentModal

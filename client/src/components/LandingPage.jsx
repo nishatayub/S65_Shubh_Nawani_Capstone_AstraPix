@@ -1,23 +1,32 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { motion, useAnimation } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Sparkles, Shield, Zap, Image, Check, Star, Crown, Rocket } from 'lucide-react';
-import Logo from './common/Logo';
-import Footer from './common/Footer';
-import LoadingAnimation from './common/LoadingAnimation';
-import landingVideo from '../assets/Landing.mp4';
-import ChatBot from './common/ChatBot';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { motion, useAnimation } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowRight,
+  Sparkles,
+  Shield,
+  Zap,
+  Image,
+  Check,
+  Star,
+  Crown,
+  Rocket,
+} from "lucide-react";
+import Logo from "./common/Logo";
+import Footer from "./common/Footer";
+import LoadingAnimation from "./common/LoadingAnimation";
+import landingVideo from "../assets/Landing.mp4";
+import ChatBot from "./common/ChatBot";
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const controls = useAnimation();
   const videoRef = useRef(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const cursorRef = useRef(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const throttleRef = useRef(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [shouldAnimate, setShouldAnimate] = useState(true);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -32,14 +41,16 @@ const LandingPage = () => {
     // Simulate minimum loading time
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 3000);
+    }, 2000); // Reduced from 3000 to 2000ms
 
     return () => clearTimeout(timer);
   }, []);
 
+  // Optimized scroll handler with reduced calculations
   const throttledScrollHandler = useCallback(() => {
     if (!throttleRef.current) {
       throttleRef.current = true;
+      // Use rAF to limit calculations to frame rate
       requestAnimationFrame(() => {
         const scrollPosition = window.scrollY;
         const windowHeight = window.innerHeight;
@@ -51,8 +62,9 @@ const LandingPage = () => {
   }, []);
 
   useEffect(() => {
-    window.addEventListener('scroll', throttledScrollHandler, { passive: true });
-    return () => window.removeEventListener('scroll', throttledScrollHandler);
+    // Apply passive option to all scroll listeners
+    window.addEventListener("scroll", throttledScrollHandler, { passive: true });
+    return () => window.removeEventListener("scroll", throttledScrollHandler);
   }, [throttledScrollHandler]);
 
   useEffect(() => {
@@ -62,143 +74,170 @@ const LandingPage = () => {
           await videoRef.current.play();
         } catch (error) {
           console.error("Video autoplay failed:", error);
-          document.addEventListener('click', () => {
-            videoRef.current?.play();
-          }, { once: true, passive: true });
+          // Add one-time click listener to play video
+          document.addEventListener(
+            "click",
+            () => {
+              videoRef.current?.play();
+            },
+            { once: true, passive: true }
+          );
         }
       }
     };
 
     initVideo();
-    
+
+    // Handle visibility changes to pause/play video
     const handleVisibilityChange = () => {
       if (!document.hidden && videoRef.current?.paused && !isMobile) {
         videoRef.current?.play();
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange, { passive: true });
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange, {
+      passive: true,
+    });
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [isMobile]);
 
+  // Add event listener for scroll to disable animations when scrolling
   useEffect(() => {
-    let rafId;
-    const handleMouseMove = (e) => {
-      if (cursorRef.current) {
-        cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(() => {
-          const x = e.clientX - 20;
-          const y = e.clientY - 20;
-          cursorRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-          setMousePosition({ x, y });
-        });
+    let scrollTimer;
+    const handleScroll = () => {
+      if (shouldAnimate) {
+        setShouldAnimate(false);
       }
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        setShouldAnimate(true);
+      }, 200);
     };
 
-    if (!isMobile) {
-      document.documentElement.classList.add('cursor-none');
-      window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    }
-
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
-      cancelAnimationFrame(rafId);
-      document.documentElement.classList.remove('cursor-none');
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(scrollTimer);
     };
-  }, [isMobile]);
+  }, [shouldAnimate]);
 
   const features = [
     {
       icon: <Sparkles className="w-6 h-6 text-purple-400" />,
       title: "AI-Powered Generation",
-      description: "Create stunning images using state-of-the-art AI models with DALL-E 3 and Stable Diffusion XL integration. Achieve photorealistic quality and artistic excellence.",
-      details: ["Next-gen AI models", "Custom style transfer", "Real-time preview"]
+      description:
+        "Create stunning images using state-of-the-art AI models with DALL-E 3 and Stable Diffusion XL integration. Achieve photorealistic quality and artistic excellence.",
+      details: ["Next-gen AI models", "Custom style transfer", "Real-time preview"],
     },
     {
       icon: <Shield className="w-6 h-6 text-purple-400" />,
       title: "Enterprise Security",
-      description: "Your creations are protected with bank-grade encryption, secure cloud storage, and automated backups. GDPR compliant with full IP rights protection.",
-      details: ["End-to-end encryption", "GDPR compliance", "IP protection"]
+      description:
+        "Your creations are protected with bank-grade encryption, secure cloud storage, and automated backups. GDPR compliant with full IP rights protection.",
+      details: ["End-to-end encryption", "GDPR compliance", "IP protection"],
     },
     {
       icon: <Zap className="w-6 h-6 text-purple-400" />,
       title: "Lightning Fast",
-      description: "Generate images in seconds with our distributed cloud infrastructure. Optimized for both speed and quality, with smart caching and parallel processing.",
-      details: ["< 5s generation time", "Global CDN", "Smart optimization"]
+      description:
+        "Generate images in seconds with our distributed cloud infrastructure. Optimized for both speed and quality, with smart caching and parallel processing.",
+      details: ["< 5s generation time", "Global CDN", "Smart optimization"],
     },
     {
       icon: <Image className="w-6 h-6 text-purple-400" />,
       title: "Professional Quality",
-      description: "Export in ultra-high resolution formats up to 8K. Advanced upscaling technology ensures crystal-clear details perfect for commercial use.",
-      details: ["8K resolution", "RAW export", "Lossless quality"]
-    }
+      description:
+        "Export in ultra-high resolution formats up to 8K. Advanced upscaling technology ensures crystal-clear details perfect for commercial use.",
+      details: ["8K resolution", "RAW export", "Lossless quality"],
+    },
   ];
 
   const workflowSteps = [
     {
       title: "1. Enter Your Prompt",
-      description: "Unleash your imagination with natural language prompts. Whether you're thinking of a serene landscape, a futuristic cityscape, or an abstract concept, our AI understands context and artistic nuances to bring your vision to life.",
+      description:
+        "Unleash your imagination with natural language prompts. Whether you're thinking of a serene landscape, a futuristic cityscape, or an abstract concept, our AI understands context and artistic nuances to bring your vision to life.",
       icon: <Star className="w-12 h-12 text-yellow-400" />,
-      subpoints: ["Natural language understanding", "Context-aware processing", "Multi-style support"],
+      subpoints: [
+        "Natural language understanding",
+        "Context-aware processing",
+        "Multi-style support",
+      ],
       demoImages: [
-        { 
-          src: "https://images.unsplash.com/photo-1543966888-7c1dc482a810?w=800&q=80", 
-          caption: "Write Your Vision" 
+        {
+          src: "https://images.unsplash.com/photo-1543966888-7c1dc482a810?w=800&q=80",
+          caption: "Write Your Vision",
         },
-        { 
-          src: "https://images.unsplash.com/photo-1551651653-c5186a1fbba2?w=800&q=80", 
-          caption: "Let AI Create" 
-        }
-      ]
+        {
+          src: "https://images.unsplash.com/photo-1551651653-c5186a1fbba2?w=800&q=80",
+          caption: "Let AI Create",
+        },
+      ],
     },
     {
       title: "2. Choose Your Style",
-      description: "Explore a diverse palette of artistic styles. From Renaissance to Contemporary, Photorealistic to Abstract, customize every aspect of your creation with our extensive style library and fine-tuning options.",
+      description:
+        "Explore a diverse palette of artistic styles. From Renaissance to Contemporary, Photorealistic to Abstract, customize every aspect of your creation with our extensive style library and fine-tuning options.",
       icon: <Image className="w-12 h-12 text-blue-400" />,
-      subpoints: ["100+ artistic styles", "Custom style mixing", "Real-time preview"],
+      subpoints: [
+        "100+ artistic styles",
+        "Custom style mixing",
+        "Real-time preview",
+      ],
       demoImages: [
-        { 
-          src: "https://images.unsplash.com/photo-1579762715118-a6f1d4b934f1?w=800&q=80", 
-          caption: "Browse Styles" 
+        {
+          src: "https://images.unsplash.com/photo-1579762715118-a6f1d4b934f1?w=800&q=80",
+          caption: "Browse Styles",
         },
-        { 
-          src: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&q=80", 
-          caption: "Apply Effects" 
-        }
-      ]
+        {
+          src: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&q=80",
+          caption: "Apply Effects",
+        },
+      ],
     },
     {
       title: "3. Generate & Customize",
-      description: "Watch as AI transforms your vision into reality. Fine-tune every detail with intuitive controls, adjust compositions, and explore variations until your artwork is perfect. Our advanced tools give you complete creative control.",
+      description:
+        "Watch as AI transforms your vision into reality. Fine-tune every detail with intuitive controls, adjust compositions, and explore variations until your artwork is perfect. Our advanced tools give you complete creative control.",
       icon: <Zap className="w-12 h-12 text-purple-400" />,
-      subpoints: ["Real-time generation", "Advanced editing tools", "Unlimited variations"],
+      subpoints: [
+        "Real-time generation",
+        "Advanced editing tools",
+        "Unlimited variations",
+      ],
       demoImages: [
-        { 
-          src: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80", 
-          caption: "Generate Art" 
+        {
+          src: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
+          caption: "Generate Art",
         },
-        { 
-          src: "https://images.unsplash.com/photo-1558865869-c93f6f8482af?w=800&q=80", 
-          caption: "Fine-tune Details" 
-        }
-      ]
+        {
+          src: "https://images.unsplash.com/photo-1558865869-c93f6f8482af?w=800&q=80",
+          caption: "Fine-tune Details",
+        },
+      ],
     },
     {
       title: "4. Download & Share",
-      description: "Export your masterpiece in ultra-high resolution formats ready for any use. Share directly to social media, download for commercial projects, or add to your portfolio. Your creations, your way.",
+      description:
+        "Export your masterpiece in ultra-high resolution formats ready for any use. Share directly to social media, download for commercial projects, or add to your portfolio. Your creations, your way.",
       icon: <Rocket className="w-12 h-12 text-pink-400" />,
-      subpoints: ["Multiple export formats", "Social sharing", "Commercial licensing"],
+      subpoints: [
+        "Multiple export formats",
+        "Social sharing",
+        "Commercial licensing",
+      ],
       demoImages: [
-        { 
-          src: "https://images.unsplash.com/photo-1545665277-5937489579f2?w=800&q=80", 
-          caption: "Export Options" 
+        {
+          src: "https://images.unsplash.com/photo-1545665277-5937489579f2?w=800&q=80",
+          caption: "Export Options",
         },
-        { 
-          src: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=800&q=80", 
-          caption: "Share Artwork" 
-        }
-      ]
-    }
+        {
+          src: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=800&q=80",
+          caption: "Share Artwork",
+        },
+      ],
+    },
   ];
 
   const pricingPlans = [
@@ -211,12 +250,12 @@ const LandingPage = () => {
         "Basic art styles",
         "Community support",
         "24-hour generation queue",
-        "Basic prompt assistance"
+        "Basic prompt assistance",
       ],
       icon: <Star className="w-6 h-6" />,
       popular: false,
       badge: "",
-      description: "Perfect for hobbyists and beginners"
+      description: "Perfect for hobbyists and beginners",
     },
     {
       name: "Creator",
@@ -227,12 +266,12 @@ const LandingPage = () => {
         "50+ art styles",
         "Priority support",
         "1-hour generation queue",
-        "Advanced prompt builder"
+        "Advanced prompt builder",
       ],
       icon: <Image className="w-6 h-6" />,
       popular: true,
       badge: "Most Popular",
-      description: "Ideal for content creators and artists"
+      description: "Ideal for content creators and artists",
     },
     {
       name: "Professional",
@@ -243,12 +282,12 @@ const LandingPage = () => {
         "All art styles",
         "24/7 priority support",
         "Instant generation",
-        "Custom style training"
+        "Custom style training",
       ],
       icon: <Crown className="w-6 h-6" />,
       popular: false,
       badge: "Best Value",
-      description: "For professional artists and small teams"
+      description: "For professional artists and small teams",
     },
     {
       name: "Enterprise",
@@ -259,108 +298,77 @@ const LandingPage = () => {
         "Custom AI model training",
         "Dedicated account manager",
         "API access",
-        "Custom integration support"
+        "Custom integration support",
       ],
       icon: <Rocket className="w-6 h-6" />,
       popular: false,
       badge: "",
       description: "Tailored solutions for large organizations",
-      enterprise: true
-    }
+      enterprise: true,
+    },
   ];
 
   const testimonials = [
     {
       name: "Sarah Johnson",
       role: "Digital Artist & Creative Director",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop",
-      content: "AstraPix has revolutionized my creative workflow. The AI understands artistic nuances I never thought possible. I've cut my concept art time by 70% while delivering better results to my clients.",
+      image:
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop",
+      content:
+        "AstraPix has revolutionized my creative workflow. The AI understands artistic nuances I never thought possible. I've cut my concept art time by 70% while delivering better results to my clients.",
       company: "Artscape Studios",
       rating: 5,
-      verifiedUser: true
+      verifiedUser: true,
     },
     {
       name: "Mark Chen",
       role: "Senior Marketing Director",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop",
-      content: "The speed and quality of images generated are unmatched. We're creating entire campaigns in days instead of weeks. The ROI has been incredible - it's like having an entire design team at your fingertips.",
+      image:
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop",
+      content:
+        "The speed and quality of images generated are unmatched. We're creating entire campaigns in days instead of weeks. The ROI has been incredible - it's like having an entire design team at your fingertips.",
       company: "Global Innovations Inc.",
       rating: 5,
-      verifiedUser: true
+      verifiedUser: true,
     },
     {
       name: "Emily Rodriguez",
       role: "Lead UI/UX Designer",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop",
-      content: "Perfect for rapid prototyping and design iterations. The style consistency across generations is remarkable. We've integrated AstraPix into our daily design sprints with amazing results.",
+      image:
+        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop",
+      content:
+        "Perfect for rapid prototyping and design iterations. The style consistency across generations is remarkable. We've integrated AstraPix into our daily design sprints with amazing results.",
       company: "TechForward Solutions",
       rating: 5,
-      verifiedUser: true
-    }
+      verifiedUser: true,
+    },
   ];
 
   const showScrollIndicator = useCallback(() => {
     return !isMobile && window.scrollY < window.innerHeight;
   }, [isMobile]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!throttleRef.current) {
-        throttleRef.current = true;
-        requestAnimationFrame(() => {
-          const scrollPosition = window.scrollY;
-          const windowHeight = window.innerHeight;
-          const progress = Math.min(scrollPosition / windowHeight, 1);
-          setScrollProgress(progress);
-          throttleRef.current = false;
-        });
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   if (isLoading) {
     return <LoadingAnimation />;
   }
 
   return (
-    <div 
-      className={`min-h-screen relative overflow-hidden overscroll-none ${!isMobile ? 'cursor-none' : ''}`}
-      style={{ 
-        overscrollBehavior: 'none',
-        touchAction: 'pan-y pinch-zoom',
-        WebkitOverflowScrolling: 'touch'
+    <div
+      className="min-h-screen relative overflow-hidden overscroll-none"
+      style={{
+        overscrollBehavior: "none",
+        touchAction: "pan-y pinch-zoom",
+        WebkitOverflowScrolling: "touch",
       }}
     >
       <ChatBot />
-      {!isMobile && (
-        <div
-          ref={cursorRef}
-          className="fixed pointer-events-none z-50"
-          style={{
-            width: '24px',
-            height: '24px',
-            transform: 'translate3d(0, 0, 0)',
-            backfaceVisibility: 'hidden',
-            perspective: 1000,
-            WebkitFontSmoothing: 'antialiased',
-            willChange: 'transform'
-          }}
-        >
-          <div className="absolute -inset-0.5 rounded-full bg-purple-500/30 animate-pulse blur-sm" />
-          <div className="absolute inset-0 rounded-full border border-purple-400" />
-          <div className="absolute inset-[30%] rounded-full bg-white/90" />
-          <div className="absolute -inset-4 rounded-full border border-purple-400/20 scale-50 animate-ping" />
-        </div>
-      )}
 
       <div className="fixed inset-0 -z-10">
         {isMobile ? (
           <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-purple-900/50 to-black" />
         ) : (
           <>
+            {/* Optimized gradient overlays with reduced opacity changes */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/40 z-10" />
             <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30 z-10" />
             <video
@@ -370,45 +378,53 @@ const LandingPage = () => {
               muted
               playsInline
               preload="auto"
-              className="w-full h-full object-cover brightness-110 contrast-110 sm:object-center object-right-center transform-gpu"
-              style={{ 
-                willChange: 'transform, opacity',
-                height: '100vh',
-                width: '100vw',
-                objectPosition: window.innerWidth < 640 ? '70%' : 'center',
-                opacity: Math.max(0, 1 - scrollProgress * 1.5),
-                transform: `scale(${1 + scrollProgress * 0.1}) translateZ(0)`,
-                filter: scrollProgress > 0.1 ? `blur(${scrollProgress * 8}px)` : 'none',
+              className="w-full h-full object-cover sm:object-center object-right-center"
+              style={{
+                willChange: "transform, opacity",
+                height: "100vh",
+                width: "100vw",
+                objectPosition: window.innerWidth < 640 ? "70%" : "center",
+                // Simplified transform and effect properties
+                opacity: Math.max(0, 1 - scrollProgress * 1.2),
+                transform: `scale(${1 + scrollProgress * 0.05})`,
+                // Apply blur only when scrolled significantly and only if not mobile
+                filter:
+                  scrollProgress > 0.2 && !isMobile
+                    ? `blur(${Math.min(scrollProgress * 6, 6)}px)`
+                    : "none",
               }}
               controlsList="nodownload nofullscreen noremoteplayback"
             >
-              <source 
-                src={landingVideo} 
-                type="video/mp4" 
-                onError={(e) => console.error("Video source error:", e)} 
+              <source
+                src={landingVideo}
+                type="video/mp4"
+                onError={(e) => console.error("Video source error:", e)}
               />
               Your browser does not support the video tag.
             </video>
           </>
         )}
-        <div 
+        {/* Simpler gradient with fewer opacity changes */}
+        <div
           className="absolute inset-0 bg-gradient-to-b from-black to-purple-900/30 z-20"
           style={{
-            opacity: scrollProgress * 0.8,
-            transition: 'opacity 0.3s ease-out'
+            opacity: Math.min(0.8, scrollProgress * 0.7),
           }}
         />
       </div>
 
       <div className="relative z-10">
-        <nav className="fixed top-0 left-0 right-0 bg-black/30 backdrop-blur-md border-b border-white/10 z-50">
+        <nav className="fixed top-0 left-0 right-0 bg-black/30 backdrop-blur-sm border-b border-white/10 z-50">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-2 sm:py-3">
             <div className="flex justify-between items-center">
-              <motion.div className={isMobile ? "" : "cursor-none"}>
+              <motion.div
+                // Remove unnecessary animations
+                initial={{ opacity: 1 }}
+              >
                 <div className="flex items-center space-x-2 sm:space-x-3">
                   <Logo className="w-8 h-8 sm:w-10 sm:h-10" />
                   <div className="flex flex-col">
-                    <span className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                    <span className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
                       AstraPix
                     </span>
                     <span className="text-xs font-medium text-purple-400/80 hidden sm:inline-block">
@@ -424,7 +440,7 @@ const LandingPage = () => {
 
         {showScrollIndicator() && (
           <motion.div 
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 cursor-none hidden md:block"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 hidden md:block"
             initial={{ opacity: 0 }}
             animate={{ opacity: scrollProgress < 0.1 ? 1 : 0 }}
             transition={{ duration: 0.3 }}
@@ -450,24 +466,32 @@ const LandingPage = () => {
                   className="space-y-2 sm:space-y-4 mb-8 sm:mb-12"
                 >
                   <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-bold">
-                    <span className="block text-white mb-1 sm:mb-2 md:mb-4 [text-shadow:_0_4px_12px_rgba(0,0,0,0.5)] hover:text-purple-300 transition-colors duration-300">
+                    <span className="block text-white mb-1 sm:mb-2 md:mb-4 transition-colors duration-300">
                       Unleash Your
                     </span>
-                    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 transition-all duration-300 [text-shadow:_2px_2px_20px_rgba(168,85,247,0.4)]">
+                    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 hover:from-purple-500 hover:via-pink-500 hover:to-purple-500 transition-all duration-300">
                       Creative Vision
                     </span>
                   </h1>
                 </motion.div>
 
-                <motion.p 
+                <motion.p
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.2 }}
-                  className="max-w-2xl mx-auto text-sm sm:text-base md:text-lg text-gray-200 leading-relaxed mb-8 sm:mb-12 px-4 [text-shadow:_0_2px_8px_rgba(0,0,0,0.5)] space-y-2 sm:space-y-4"
+                  className="max-w-2xl mx-auto text-sm sm:text-base md:text-lg text-gray-200 leading-relaxed mb-8 sm:mb-12 px-4 space-y-2 sm:space-y-4"
                 >
-                  <span className="block mb-2 sm:mb-4">Transform your ideas into stunning visuals with our 
-                  <span className="text-purple-400 font-medium"> AI-powered platform</span>.</span>
-                  <span className="block">Create unique, professional-grade artwork that captivates.</span>
+                  <span className="block mb-2 sm:mb-4">
+                    Transform your ideas into stunning visuals with our
+                    <span className="text-purple-400 font-medium">
+                      {" "}
+                      AI-powered platform
+                    </span>
+                    .
+                  </span>
+                  <span className="block">
+                    Create unique, professional-grade artwork that captivates.
+                  </span>
                 </motion.p>
 
                 <motion.div
@@ -477,15 +501,15 @@ const LandingPage = () => {
                   className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 md:space-x-6 px-4"
                 >
                   <button
-                    onClick={() => navigate('/auth')}
-                    className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 group transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-purple-500/25 touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black"
+                    onClick={() => navigate("/auth")}
+                    className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium flex items-center justify-center space-x-2 group transform hover:scale-105 transition-all duration-300 shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black"
                   >
                     <span className="text-base sm:text-lg">Start Creating</span>
                     <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button
-                    onClick={() => navigate('/gallery')}
-                    className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transform hover:scale-105 transition-all duration-300 border border-white/20 hover:border-purple-500/50 touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-black"
+                    onClick={() => navigate("/gallery")}
+                    className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transform hover:scale-105 transition-all duration-300 border border-white/20 hover:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-black"
                   >
                     <span className="text-base sm:text-lg">View Gallery</span>
                   </button>
@@ -496,10 +520,10 @@ const LandingPage = () => {
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8 sm:mb-16">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">
                 How It Works
               </h2>
-              <p className="text-base sm:text-lg text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+              <p className="text-base sm:text-lg text-gray-300 max-w-3xl mx-auto">
                 Create stunning visuals in just a few simple steps
               </p>
             </div>
@@ -508,7 +532,7 @@ const LandingPage = () => {
               {workflowSteps.map((step) => (
                 <div
                   key={step.title}
-                  className="bg-black/40 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border border-white/10 hover:bg-black/50 transition-all group"
+                  className="bg-black/40 backdrop-blur-sm rounded-xl p-4 sm:p-6 md:p-8 border border-white/10 hover:bg-black/50 transition-all group"
                 >
                   <div className="flex flex-col space-y-4 sm:space-y-6">
                     <div className="flex items-start space-x-3 sm:space-x-6">
@@ -516,10 +540,10 @@ const LandingPage = () => {
                         {step.icon}
                       </div>
                       <div className="flex-grow">
-                        <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                        <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">
                           {step.title}
                         </h3>
-                        <p className="text-sm sm:text-base text-gray-300 mb-3 sm:mb-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] group-hover:text-gray-200 transition-colors">
+                        <p className="text-sm sm:text-base text-gray-300 mb-3 sm:mb-4 group-hover:text-gray-200 transition-colors">
                           {step.description}
                         </p>
                         <div className="flex flex-wrap gap-1 sm:gap-2">
@@ -536,7 +560,10 @@ const LandingPage = () => {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                       {step.demoImages.map((demo, index) => (
-                        <div key={index} className="relative rounded-lg overflow-hidden group-hover:shadow-lg transition-shadow duration-300">
+                        <div
+                          key={index}
+                          className="relative rounded-lg overflow-hidden group-hover:shadow-md transition-shadow duration-300"
+                        >
                           <img
                             src={demo.src}
                             alt={demo.caption}
@@ -561,10 +588,10 @@ const LandingPage = () => {
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8 sm:mb-16">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-6">
                 Choose Your Plan
               </h2>
-              <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+              <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto">
                 Select the perfect plan for your creative needs
               </p>
             </div>
@@ -572,13 +599,13 @@ const LandingPage = () => {
               {pricingPlans.map((plan) => (
                 <div
                   key={plan.name}
-                  className={`bg-black/40 backdrop-blur-md rounded-xl p-4 sm:p-6 md:p-8 border ${
+                  className={`bg-black/40 backdrop-blur-sm rounded-xl p-4 sm:p-6 md:p-8 border ${
                     plan.popular
                       ? "border-purple-500"
                       : plan.badge === "Best Value"
                       ? "border-pink-500"
                       : "border-white/10"
-                  } relative hover:bg-black/50 transition-all touch-manipulation flex flex-col`}
+                  } relative hover:bg-black/50 transition-all flex flex-col`}
                 >
                   {plan.badge && (
                     <div
@@ -603,7 +630,9 @@ const LandingPage = () => {
                   <div className="text-2xl sm:text-3xl font-bold text-purple-400 text-center mb-4 sm:mb-6">
                     <span className="text-xl sm:text-2xl">{plan.price}</span>
                     {!plan.enterprise && (
-                      <span className="text-sm sm:text-lg text-gray-500">/month</span>
+                      <span className="text-sm sm:text-lg text-gray-500">
+                        /month
+                      </span>
                     )}
                   </div>
                   <ul className="space-y-2 sm:space-y-4 mb-6 sm:mb-8 flex-grow">
@@ -618,8 +647,10 @@ const LandingPage = () => {
                     ))}
                   </ul>
                   <button
-                    onClick={() => navigate(plan.enterprise ? "/contact" : "/auth")}
-                    className={`w-full py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center touch-manipulation mt-auto focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1 focus:ring-offset-black ${
+                    onClick={() =>
+                      navigate(plan.enterprise ? "/contact" : "/auth")
+                    }
+                    className={`w-full py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center mt-auto focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-1 focus:ring-offset-black ${
                       plan.enterprise
                         ? "bg-black/30 text-white/80 hover:text-white border border-white/10 hover:border-purple-500/20"
                         : "bg-white/5 hover:bg-white/10 text-white/90 hover:text-white border border-white/10 hover:border-purple-500/20"
@@ -636,10 +667,10 @@ const LandingPage = () => {
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8 sm:mb-16">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-6">
                 Why Choose AstraPix
               </h2>
-              <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+              <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto">
                 Experience the future of AI-powered image generation
               </p>
             </div>
@@ -647,17 +678,15 @@ const LandingPage = () => {
               {features.map((feature) => (
                 <div
                   key={feature.title}
-                  className="p-4 sm:p-6 bg-black/40 backdrop-blur-md rounded-xl border border-white/20 hover:border-purple-500/50 transition-all group transform-gpu touch-manipulation"
+                  className="p-4 sm:p-6 bg-black/40 backdrop-blur-sm rounded-xl border border-white/20 hover:border-purple-500/50 transition-all group"
                 >
-                  <div className="mb-3 sm:mb-4 relative transform-gpu group-hover:scale-110 transition-transform">
-                    <div className="relative z-10">
-                      {feature.icon}
-                    </div>
+                  <div className="mb-3 sm:mb-4 relative">
+                    <div className="relative z-10">{feature.icon}</div>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-1 sm:mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] group-hover:text-purple-400 transition-colors">
+                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-1 sm:mb-2 group-hover:text-purple-400 transition-colors">
                     {feature.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                  <p className="text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">
                     {feature.description}
                   </p>
                   <div className="flex flex-wrap gap-1 sm:gap-2">
@@ -676,14 +705,14 @@ const LandingPage = () => {
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center mb-8 sm:mb-16 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center mb-8 sm:mb-16">
               What Our Users Say
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
               {testimonials.map((testimonial) => (
                 <div
                   key={testimonial.name}
-                  className="bg-black/40 backdrop-blur-md rounded-xl p-4 sm:p-6 border border-white/20 transition-all group touch-manipulation hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]"
+                  className="bg-black/40 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/20 transition-all group hover:border-purple-400/30"
                 >
                   <div className="flex items-center mb-3 sm:mb-4">
                     <div className="relative">
@@ -706,22 +735,27 @@ const LandingPage = () => {
                     </div>
                     <div className="ml-3 sm:ml-4">
                       <div className="flex items-center gap-1 sm:gap-2">
-                        <h3 className="text-sm sm:text-base font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                        <h3 className="text-sm sm:text-base font-semibold text-white">
                           {testimonial.name}
                         </h3>
                       </div>
-                      <p className="text-xs sm:text-sm text-purple-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                      <p className="text-xs sm:text-sm text-purple-400">
                         {testimonial.role}
                       </p>
-                      <p className="text-xs text-gray-500">{testimonial.company}</p>
+                      <p className="text-xs text-gray-500">
+                        {testimonial.company}
+                      </p>
                     </div>
                   </div>
                   <div className="flex gap-0.5 sm:gap-1 mb-2 sm:mb-3">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />
+                      <Star
+                        key={i}
+                        className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400"
+                      />
                     ))}
                   </div>
-                  <p className="text-xs sm:text-sm text-gray-300 italic drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] group-hover:text-white transition-colors">
+                  <p className="text-xs sm:text-sm text-gray-300 italic group-hover:text-white transition-colors">
                     "{testimonial.content}"
                   </p>
                 </div>
@@ -734,16 +768,18 @@ const LandingPage = () => {
               {[
                 { number: "1M+", label: "Images Generated" },
                 { number: "50K+", label: "Active Users" },
-                { number: "4.9/5", label: "User Rating" }
+                { number: "4.9/5", label: "User Rating" },
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className="group hover:scale-105 sm:hover:scale-110 transition-transform duration-300"
+                  className="group hover:scale-105 transition-transform duration-300"
                 >
                   <div className="text-3xl sm:text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
                     {stat.number}
                   </div>
-                  <p className="text-sm sm:text-base text-gray-400 mt-1 sm:mt-2">{stat.label}</p>
+                  <p className="text-sm sm:text-base text-gray-400 mt-1 sm:mt-2">
+                    {stat.label}
+                  </p>
                 </div>
               ))}
             </div>
@@ -751,27 +787,18 @@ const LandingPage = () => {
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center relative">
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-3xl -z-10"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  rotate: [0, 90, 0],
-                }}
-                transition={{
-                  duration: 10,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-              />
+              {/* Simple static gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-3xl -z-10" />
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-6">
                 Ready to Start Creating?
               </h2>
               <p className="text-sm sm:text-base text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto">
-                Join thousands of creators who are already using AstraPix to bring their ideas to life.
+                Join thousands of creators who are already using AstraPix to
+                bring their ideas to life.
               </p>
               <button
-                onClick={() => navigate('/auth')}
-                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm sm:text-base touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black"
+                onClick={() => navigate("/auth")}
+                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black"
               >
                 Get Started For Free
               </button>
