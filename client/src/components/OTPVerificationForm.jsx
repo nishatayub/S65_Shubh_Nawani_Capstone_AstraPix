@@ -143,7 +143,7 @@ const OTPVerificationForm = ({
         
         <button
           type="submit"
-          disabled={isSubmitting || otp.length !== 6 || otp.includes('')}
+          disabled={isSubmitting || !otp || otp.length !== 6}
           className="w-full py-2 sm:py-2.5 md:py-3 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg text-white font-semibold hover:opacity-90 transition-all disabled:opacity-50 text-sm sm:text-base touch-manipulation focus:ring-2 focus:ring-purple-400 focus:ring-offset-1 focus:ring-offset-purple-900 focus:outline-none"
           aria-label={isSubmitting ? "Verifying OTP" : "Verify OTP"}
         >
