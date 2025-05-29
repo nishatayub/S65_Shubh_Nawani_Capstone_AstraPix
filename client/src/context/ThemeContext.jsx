@@ -35,6 +35,8 @@ export const ThemeProvider = ({ children }) => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
+  const [customTheme, setCustomTheme] = useState(false); // New state for custom theme
+
   // Update the UI when dark mode changes
   useEffect(() => {
     updateFavicon(darkMode);
@@ -108,6 +110,51 @@ export const ThemeProvider = ({ children }) => {
     }
   }, []);
 
+  const toggleCustomTheme = useCallback(() => {
+    setCustomTheme((prev) => !prev);
+  }, []);
+
+  const themeColors = customTheme
+    ? {
+        primary: '#0A111A', // Chinese Black
+        secondary: '#294A8F', // YInMn Blue
+        background: '#9FB7E3', // Pale Cerulean
+        accent: '#D8D0E7', // Languid Lavender
+        text: '#9295D0', // Ceil
+      }
+    : darkMode
+    ? {
+        primary: '#0f172a',
+        secondary: '#1e293b',
+        background: '#0f172a',
+        accent: '#1e293b',
+        text: '#ffffff',
+      }
+    : {
+        primary: '#ffffff',
+        secondary: '#f3f4f6',
+        background: '#ffffff',
+        accent: '#f3f4f6',
+        text: '#333333',
+      };
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--primary-color', themeColors.primary);
+    document.documentElement.style.setProperty('--secondary-color', themeColors.secondary);
+    document.documentElement.style.setProperty('--background-color', themeColors.background);
+    document.documentElement.style.setProperty('--accent-color', themeColors.accent);
+    document.documentElement.style.setProperty('--text-color', themeColors.text);
+  }, [themeColors]);
+
+  // Apply or remove custom-theme class based on customTheme state
+  useEffect(() => {
+    if (customTheme) {
+      document.documentElement.classList.add('custom-theme');
+    } else {
+      document.documentElement.classList.remove('custom-theme');
+    }
+  }, [customTheme]);
+
   // Calculate current theme string
   const theme = darkMode ? 'dark' : 'light';
 
@@ -135,7 +182,10 @@ export const ThemeProvider = ({ children }) => {
         toggleTheme, 
         setThemePreference,
         theme,
-        logoSize 
+        logoSize,
+        customTheme,
+        toggleCustomTheme,
+        themeColors,
       }}
     >
       {children}
